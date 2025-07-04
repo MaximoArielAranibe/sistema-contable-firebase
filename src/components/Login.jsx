@@ -15,6 +15,7 @@ export default function Login() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      // Redirigí si querés con useNavigate()
     } catch (error) {
       setError(error.message);
     } finally {
@@ -24,6 +25,7 @@ export default function Login() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col p-4 max-w-xs mx-auto gap-4">
+      <h2 className="text-xl font-bold">Iniciar sesión</h2>
       <input
         className="border p-2 rounded"
         type="email"
