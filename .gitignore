@@ -1,2 +1,34 @@
+# Node modules
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 firebase-debug.log
-node_modules
+
+# Env files
+.env
+
+# Build output
+build/
+dist/
+
+# Firebase cache and functions dependencies
+.firebase/
+.firebase-cache/
+
+# Editor folders and files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Optional: coverage reports
+coverage/

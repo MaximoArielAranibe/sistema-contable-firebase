@@ -3,13 +3,13 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAcE8L8BGIHA-pGFl77ZyGL0sRHyK8Y_0o",
-  authDomain: "sistema-contable-firebase.firebaseapp.com",
-  projectId: "sistema-contable-firebase",
-  storageBucket: "sistema-contable-firebase.firebasestorage.app",
-  messagingSenderId: "374720410405",
-  appId: "1:374720410405:web:27040992da6363cae060cc",
-  measurementId: "G-X2J3GCQT08"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
 const app = initializeApp(firebaseConfig);
