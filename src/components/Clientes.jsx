@@ -7,8 +7,9 @@ import {
   eliminarCliente,
   restarDeuda,
   sumarDeuda,
+  modificarCliente,
 } from "../services/clientesService";
-import '../styles/clientes.scss'
+import "../styles/clientes.scss";
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -16,7 +17,11 @@ function Clientes() {
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
   const [deuda, setDeuda] = useState("");
-  const [comentariosAdicionales, setComentariosAdicionales] = useState("")
+  const [comentariosAdicionales, setComentariosAdicionales] = useState("");
+  const [busqueda, setBusqueda] = useState("");
+  const [editandoComentario, setEditandoComentario] = useState(null);
+  const [nuevoComentario, setNuevoComentario] = useState("");
+  const [mostrarModal, setMostrarModal] = useState(false);
 
   useEffect(() => {
     cargarClientes();
@@ -30,6 +35,15 @@ function Clientes() {
       alert("Error al cargar clientes: " + error.message);
     }
   };
+
+  const clientesFiltrados = busqueda.trim()
+    ? clientes.filter((cliente) =>
+        [cliente.nombre, cliente.telefono, cliente.direccion, cliente.comentariosAdicionales]
+          .some((campo) =>
+            campo?.toLowerCase().includes(busqueda.toLowerCase())
+          )
+      )
+    : clientes;
 
   const resetFormulario = () => {
     setNombre("");
@@ -47,19 +61,34 @@ function Clientes() {
     }
 
     try {
-      const nuevoId = await agregarCliente(nombre, telefono, direccion, deuda, comentariosAdicionales);
-      const nuevoCliente = { id: nuevoId, nombre, telefono, direccion, deuda, comentariosAdicionales };
-      toast.success("Cliente agregado con éxito")
+      const nuevoId = await agregarCliente(
+        nombre,
+        telefono,
+        direccion,
+        deuda,
+        comentariosAdicionales
+      );
+      const nuevoCliente = {
+        id: nuevoId,
+        nombre,
+        telefono,
+        direccion,
+        deuda,
+        comentariosAdicionales,
+      };
+      toast.success("Cliente agregado con éxito");
       setClientes((prev) => [...prev, nuevoCliente]);
       resetFormulario();
+      setMostrarModal(false);
     } catch (error) {
       toast.error("Error al agregar cliente: " + error.message);
-
     }
   };
 
   const handleBorrarCliente = async (id) => {
-    const confirmacion = prompt("Si estás seguro de eliminar este cliente, escribí: eliminar");
+    const confirmacion = prompt(
+      "Si estás seguro de eliminar este cliente, escribí: eliminar"
+    );
 
     if (confirmacion !== "eliminar") {
       toast.warning("Cancelado. No se eliminó el cliente.");
@@ -74,11 +103,15 @@ function Clientes() {
     }
   };
 
-
   const actualizarDeuda = async (id, operacion, name) => {
-    const input = prompt(`¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name} ?`);
+    const input = prompt(
+      `¿Cuánto querés ${
+        operacion === "sumar" ? "sumar" : "restar"
+      } a la deuda de ${name} ?`
+    );
     const monto = parseFloat(input);
-    if (isNaN(monto) || monto <= 0) return alert("Ingresá un número válido mayor que cero");
+    if (isNaN(monto) || monto <= 0)
+      return alert("Ingresá un número válido mayor que cero");
 
     try {
       const nuevaDeuda =
@@ -94,49 +127,170 @@ function Clientes() {
     }
   };
 
+  const guardarComentario = async (clienteId) => {
+    try {
+      await modificarCliente(clienteId, {
+        comentariosAdicionales: nuevoComentario,
+      });
+
+      setClientes((prev) =>
+        prev.map((c) =>
+          c.id === clienteId
+            ? { ...c, comentariosAdicionales: nuevoComentario }
+            : c
+        )
+      );
+
+      toast.success("Comentario actualizado");
+      setEditandoComentario(null);
+      setNuevoComentario("");
+    } catch (error) {
+      toast.error("Error al actualizar comentario: " + error.message);
+    }
+  };
+
   return (
     <div className="clientes">
-      <div className="clientes__agregar">
-        <h2 className="clientes__agregar-title">Agregar Cliente</h2>
-        <form onSubmit={handleAgregarCliente}>
-          <input className="clientes__agregar-input" placeholder="Nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} />
-          <input className="clientes__agregar-input" placeholder="Teléfono" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
-          <input className="clientes__agregar-input" placeholder="Dirección" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
-          <input className="clientes__agregar-input" placeholder="Deuda" type="number" value={deuda} onChange={(e) => setDeuda(e.target.value)} />
-          <input className="clientes__agregar-input" placeholder="Comentarios adicionales..." value={comentariosAdicionales} onChange={(e) => setComentariosAdicionales(e.target.value)} />
-        </form>
-        <button type="submit" className="clientes__agregar-button" onClick={handleAgregarCliente}>Agregar</button>
-      </div>
-      <hr />
       <div className="clientes__lista">
-        <h2 className="clientes__lista-title">Lista de Clientes</h2>
-        {clientes.length === 0 ? (
-          <p>No hay clientes registrados</p>
+        <div className="clientes__lista-header">
+          <h2 className="clientes__lista-title">Lista de Clientes</h2>
+          <button
+            onClick={() => setMostrarModal(true)}
+            className="clientes__abrir-modal"
+          >
+            + Agregar Cliente
+          </button>
+        </div>
+
+        <input
+          type="text"
+          placeholder="Buscar por nombre, dirección, teléfono..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="clientes__buscar"
+        />
+
+        {clientesFiltrados.length === 0 ? (
+          <p>No se encontraron clientes</p>
         ) : (
           <ul>
-            {clientes.map((cliente) => (
+            {clientesFiltrados.map((cliente) => (
               <li key={cliente.id} className="cliente">
                 <div className="cliente__info">
                   <h4>Nombre: {cliente.nombre}</h4>
-                  <h4>Telefono: {cliente.telefono}</h4>
+                  <h4>Teléfono: {cliente.telefono}</h4>
                   <h4>Dirección: {cliente.direccion}</h4>
-                  <h4>Deuda: ${Number(cliente.deuda).toLocaleString("es-AR")}</h4>
-                  <h4>Comentarios: {cliente.comentariosAdicionales}</h4>
+                  <h4>
+                    Deuda: ${Number(cliente.deuda).toLocaleString("es-AR")}
+                  </h4>
+                  <h4>
+                    Comentarios:{" "}
+                    {editandoComentario === cliente.id ? (
+                      <>
+                        <input
+                          type="text"
+                          value={nuevoComentario}
+                          onChange={(e) => setNuevoComentario(e.target.value)}
+                        />
+                        <button
+                          onClick={() => guardarComentario(cliente.id)}
+                        >
+                          Guardar
+                        </button>
+                        <button onClick={() => setEditandoComentario(null)}>
+                          Cancelar
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        {cliente.comentariosAdicionales || "Sin comentarios"}{" "}
+                        <button
+                          onClick={() => {
+                            setEditandoComentario(cliente.id);
+                            setNuevoComentario(
+                              cliente.comentariosAdicionales || ""
+                            );
+                          }}
+                        >
+                          ✏️
+                        </button>
+                      </>
+                    )}
+                  </h4>
                 </div>
                 <div className="cliente__funciones">
-                  <button onClick={() => handleBorrarCliente(cliente.id)}>🗑️</button>
-                  <button onClick={() => actualizarDeuda(cliente.id, "restar", cliente.nombre)}>➖</button>
-                  <button onClick={() => actualizarDeuda(cliente.id, "sumar", cliente.nombre)}>➕</button>
+                  <button onClick={() => handleBorrarCliente(cliente.id)}>
+                    🗑️
+                  </button>
+                  <button
+                    onClick={() =>
+                      actualizarDeuda(cliente.id, "restar", cliente.nombre)
+                    }
+                  >
+                    ➖
+                  </button>
+                  <button
+                    onClick={() =>
+                      actualizarDeuda(cliente.id, "sumar", cliente.nombre)
+                    }
+                  >
+                    ➕
+                  </button>
                 </div>
               </li>
             ))}
           </ul>
         )}
       </div>
+
+      {mostrarModal && (
+        <div className="clientes__modal-overlay">
+          <div className="clientes__modal">
+            <button
+              onClick={() => setMostrarModal(false)}
+              className="clientes__modal-cerrar"
+            >
+              ✖
+            </button>
+            <h2 className="clientes__modal-title">Agregar Cliente</h2>
+            <form onSubmit={handleAgregarCliente} className="clientes__modal-form">
+              <input
+                placeholder="Nombre"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+              />
+              <input
+                placeholder="Teléfono"
+                value={telefono}
+                onChange={(e) => setTelefono(e.target.value)}
+              />
+              <input
+                placeholder="Dirección"
+                value={direccion}
+                onChange={(e) => setDireccion(e.target.value)}
+              />
+              <input
+                placeholder="Deuda"
+                type="number"
+                value={deuda}
+                onChange={(e) => setDeuda(e.target.value)}
+              />
+              <input
+                placeholder="Comentarios adicionales..."
+                value={comentariosAdicionales}
+                onChange={(e) => setComentariosAdicionales(e.target.value)}
+              />
+              <button type="submit" className="clientes__modal-button">
+                Agregar
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       <ToastContainer position="top-center" autoClose={3000} />
     </div>
   );
-
 }
 
 export default Clientes;
