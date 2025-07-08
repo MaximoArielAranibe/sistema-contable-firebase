@@ -22,15 +22,24 @@ function Clientes() {
   const [editandoComentario, setEditandoComentario] = useState(null);
   const [nuevoComentario, setNuevoComentario] = useState("");
   const [mostrarModal, setMostrarModal] = useState(false);
+  const [deudaTotal, setDeudaToobal] = useState(0);
 
   useEffect(() => {
     cargarClientes();
   }, []);
 
+  const calcularDeudaTotal = (clientes) => {
+    const total = clientes.reduce((acc, cliente) => {
+      return acc + parseFloat(cliente.deuda || 0);
+    }, 0)
+    setDeudaToobal(total)
+  }
+
   const cargarClientes = async () => {
     try {
       const lista = await obtenerClientes();
       setClientes(lista);
+      calcularDeudaTotal(lista)
     } catch (error) {
       alert("Error al cargar clientes: " + error.message);
     }
@@ -38,11 +47,11 @@ function Clientes() {
 
   const clientesFiltrados = busqueda.trim()
     ? clientes.filter((cliente) =>
-        [cliente.nombre, cliente.telefono, cliente.direccion, cliente.comentariosAdicionales]
-          .some((campo) =>
-            campo?.toLowerCase().includes(busqueda.toLowerCase())
-          )
-      )
+      [cliente.nombre, cliente.telefono, cliente.direccion, cliente.comentariosAdicionales]
+        .some((campo) =>
+          campo?.toLowerCase().includes(busqueda.toLowerCase())
+        )
+    )
     : clientes;
 
   const resetFormulario = () => {
@@ -105,8 +114,7 @@ function Clientes() {
 
   const actualizarDeuda = async (id, operacion, name) => {
     const input = prompt(
-      `¿Cuánto querés ${
-        operacion === "sumar" ? "sumar" : "restar"
+      `¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"
       } a la deuda de ${name} ?`
     );
     const monto = parseFloat(input);
@@ -119,9 +127,14 @@ function Clientes() {
           ? await sumarDeuda(id, monto)
           : await restarDeuda(id, monto);
 
-      setClientes((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, deuda: nuevaDeuda } : c))
-      );
+      setClientes((prev) => {
+        const actualizados = prev.map((c) =>
+          c.id === id ? { ...c, deuda: nuevaDeuda } : c
+        );
+        calcularDeudaTotal(actualizados);
+        return actualizados;
+      });
+
     } catch (error) {
       alert(`Error al ${operacion} deuda: ` + error.message);
     }
@@ -174,6 +187,10 @@ function Clientes() {
           <p>No se encontraron clientes</p>
         ) : (
           <ul>
+            <h3 className="clientes__deuda-total">
+              Deuda total: ${deudaTotal.toLocaleString("es-AR")}
+            </h3>
+
             {clientesFiltrados.map((cliente) => (
               <li key={cliente.id} className="cliente">
                 <div className="cliente__info">
