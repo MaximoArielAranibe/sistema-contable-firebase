@@ -2,6 +2,7 @@
 import {
   collection,
   addDoc,
+  getDoc,
   getDocs,
   deleteDoc,
   doc,
@@ -54,8 +55,8 @@ export const sumarDeuda = async (clienteId, monto) => {
   if (!user) throw new Error("Usuario no autenticado");
 
   const clienteRef = doc(db, "usuarios", user.uid, "clientes", clienteId);
-  const snapshot = await clienteRef.get();
-  const actual = snapshot.data().deuda || 0;
+  const snapshot = await getDoc(clienteRef);
+  const actual = snapshot.data()?.deuda || 0;
   const nuevaDeuda = actual + monto;
   await updateDoc(clienteRef, { deuda: nuevaDeuda });
   return nuevaDeuda;
@@ -67,8 +68,8 @@ export const restarDeuda = async (clienteId, monto) => {
   if (!user) throw new Error("Usuario no autenticado");
 
   const clienteRef = doc(db, "usuarios", user.uid, "clientes", clienteId);
-  const snapshot = await clienteRef.get();
-  const actual = snapshot.data().deuda || 0;
+  const snapshot = await getDoc(clienteRef);
+  const actual = snapshot.data()?.deuda || 0;
   const nuevaDeuda = Math.max(actual - monto, 0);
   await updateDoc(clienteRef, { deuda: nuevaDeuda });
   return nuevaDeuda;

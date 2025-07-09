@@ -23,6 +23,8 @@ function Clientes() {
   const [nuevoComentario, setNuevoComentario] = useState("");
   const [mostrarModal, setMostrarModal] = useState(false);
   const [deudaTotal, setDeudaToobal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [ordenSeleccionado, setOrdenSeleccionado] = useState("recientes");
 
   useEffect(() => {
     cargarClientes();
@@ -31,28 +33,43 @@ function Clientes() {
   const calcularDeudaTotal = (clientes) => {
     const total = clientes.reduce((acc, cliente) => {
       return acc + parseFloat(cliente.deuda || 0);
-    }, 0)
-    setDeudaToobal(total)
-  }
+    }, 0);
+    setDeudaToobal(total);
+  };
 
   const cargarClientes = async () => {
     try {
       const lista = await obtenerClientes();
       setClientes(lista);
-      calcularDeudaTotal(lista)
+      calcularDeudaTotal(lista);
     } catch (error) {
       alert("Error al cargar clientes: " + error.message);
     }
   };
 
-  const clientesFiltrados = busqueda.trim()
-    ? clientes.filter((cliente) =>
-      [cliente.nombre, cliente.telefono, cliente.direccion, cliente.comentariosAdicionales]
-        .some((campo) =>
-          campo?.toLowerCase().includes(busqueda.toLowerCase())
-        )
+  const clientesOrdenados = [...clientes]
+    .filter((cliente) =>
+      busqueda.trim()
+        ? [cliente.nombre, cliente.telefono, cliente.direccion, cliente.comentariosAdicionales]
+          .some((campo) =>
+            campo?.toLowerCase().includes(busqueda.toLowerCase())
+          )
+        : true
     )
-    : clientes;
+    .sort((a, b) => {
+      switch(ordenSeleccionado){
+        case "deudaAsc":
+          return parseFloat(a.deuda || 0) - parseFloat(b.deuda || 0);
+        case "deudaDesc":
+          return parseFloat(b.deuda || 0) - parseFloat(a.deuda || 0);
+        case "nombreAZ":
+          return a.nombre.localeCompare(b.nombre)
+        case "nombreZA":
+          return b.nombre.localeCompare(a.nombre);
+          default:
+            return b.createdAt - a.createdAt;
+      }
+    });
 
   const resetFormulario = () => {
     setNombre("");
@@ -70,27 +87,27 @@ function Clientes() {
     }
 
     try {
-      const nuevoId = await agregarCliente(
-        nombre,
-        telefono,
-        direccion,
-        deuda,
-        comentariosAdicionales
-      );
-      const nuevoCliente = {
-        id: nuevoId,
+      setIsLoading(true);
+      const nuevoClienteObj = {
         nombre,
         telefono,
         direccion,
         deuda,
         comentariosAdicionales,
+        createdAt: Date.now(),
       };
+
+      const nuevoId = await agregarCliente(nuevoClienteObj);
+      const nuevoCliente = { id: nuevoId, ...nuevoClienteObj };
       toast.success("Cliente agregado con éxito");
-      setClientes((prev) => [...prev, nuevoCliente]);
+
+      setClientes((prev) => [nuevoCliente, ...prev]);
       resetFormulario();
       setMostrarModal(false);
     } catch (error) {
       toast.error("Error al agregar cliente: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -98,6 +115,8 @@ function Clientes() {
     const confirmacion = prompt(
       "Si estás seguro de eliminar este cliente, escribí: eliminar"
     );
+
+    confirmacion.toLowerCase();
 
     if (confirmacion !== "eliminar") {
       toast.warning("Cancelado. No se eliminó el cliente.");
@@ -114,8 +133,7 @@ function Clientes() {
 
   const actualizarDeuda = async (id, operacion, name) => {
     const input = prompt(
-      `¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"
-      } a la deuda de ${name} ?`
+      `¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name} ?`
     );
     const monto = parseFloat(input);
     if (isNaN(monto) || monto <= 0)
@@ -134,7 +152,6 @@ function Clientes() {
         calcularDeudaTotal(actualizados);
         return actualizados;
       });
-
     } catch (error) {
       alert(`Error al ${operacion} deuda: ` + error.message);
     }
@@ -183,7 +200,15 @@ function Clientes() {
           className="clientes__buscar"
         />
 
-        {clientesFiltrados.length === 0 ? (
+        <select value={ordenSeleccionado} onChange={(e) => setOrdenSeleccionado(e.target.value)} className="clientes__orden-select">
+          <option value="recientes">Más recientes</option>
+          <option value="deudaAsc">Deuda: menor a mayor</option>
+          <option value="deudaDesc">Deuda: mayor a menor</option>
+          <option value="nombreAZ">Nombre: A a Z</option>
+          <option value="nombreZA">Nombre: Z a A</option>
+        </select>
+
+        {clientesOrdenados.length === 0 ? (
           <p>No se encontraron clientes</p>
         ) : (
           <ul>
@@ -191,7 +216,7 @@ function Clientes() {
               Deuda total: ${deudaTotal.toLocaleString("es-AR")}
             </h3>
 
-            {clientesFiltrados.map((cliente) => (
+            {clientesOrdenados.map((cliente) => (
               <li key={cliente.id} className="cliente">
                 <div className="cliente__info">
                   <h4>Nombre: {cliente.nombre}</h4>
@@ -209,9 +234,7 @@ function Clientes() {
                           value={nuevoComentario}
                           onChange={(e) => setNuevoComentario(e.target.value)}
                         />
-                        <button
-                          onClick={() => guardarComentario(cliente.id)}
-                        >
+                        <button onClick={() => guardarComentario(cliente.id)}>
                           Guardar
                         </button>
                         <button onClick={() => setEditandoComentario(null)}>
@@ -297,8 +320,8 @@ function Clientes() {
                 value={comentariosAdicionales}
                 onChange={(e) => setComentariosAdicionales(e.target.value)}
               />
-              <button type="submit" className="clientes__modal-button">
-                Agregar
+              <button type="submit" className="clientes__modal-button" disabled={isLoading}>
+                {isLoading ? "Agregando..." : "Agregar"}
               </button>
             </form>
           </div>
