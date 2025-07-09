@@ -10,6 +10,7 @@ import {
   modificarCliente,
 } from "../services/clientesService";
 import "../styles/clientes.scss";
+import { getAuth } from "firebase/auth";
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -26,16 +27,25 @@ function Clientes() {
   const [isLoading, setIsLoading] = useState(false);
   const [ordenSeleccionado, setOrdenSeleccionado] = useState("recientes");
 
+  // Nuevo estado para usuario logeado
+  const [usuarioLogeado, setUsuarioLogeado] = useState("");
+
   useEffect(() => {
+    const auth = getAuth();
+    const userEmail = auth.currentUser?.email || "Desconocido";
+    setUsuarioLogeado(userEmail);
+
     cargarClientes();
   }, []);
 
   const calcularDeudaTotal = (clientes) => {
     const total = clientes.reduce((acc, cliente) => {
-      return acc + parseFloat(cliente.deuda || 0);
+      const deudaNumerica = parseFloat(cliente.deuda);
+      return acc + (isNaN(deudaNumerica) ? 0 : deudaNumerica);
     }, 0);
     setDeudaToobal(total);
   };
+
 
   const cargarClientes = async () => {
     try {
@@ -51,23 +61,21 @@ function Clientes() {
     .filter((cliente) =>
       busqueda.trim()
         ? [cliente.nombre, cliente.telefono, cliente.direccion, cliente.comentariosAdicionales]
-          .some((campo) =>
-            campo?.toLowerCase().includes(busqueda.toLowerCase())
-          )
+          .some((campo) => campo?.toLowerCase().includes(busqueda.toLowerCase()))
         : true
     )
     .sort((a, b) => {
-      switch(ordenSeleccionado){
+      switch (ordenSeleccionado) {
         case "deudaAsc":
           return parseFloat(a.deuda || 0) - parseFloat(b.deuda || 0);
         case "deudaDesc":
           return parseFloat(b.deuda || 0) - parseFloat(a.deuda || 0);
         case "nombreAZ":
-          return a.nombre.localeCompare(b.nombre)
+          return a.nombre.localeCompare(b.nombre);
         case "nombreZA":
           return b.nombre.localeCompare(a.nombre);
-          default:
-            return b.createdAt - a.createdAt;
+        default:
+          return b.createdAt - a.createdAt;
       }
     });
 
@@ -81,6 +89,8 @@ function Clientes() {
 
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
+    const auth = getAuth();
+    const emailUsuario = auth.currentUser?.email || "sin email";
     if (![nombre, telefono, direccion, deuda].every((campo) => campo.trim())) {
       toast.warning("Completa todos los campos");
       return;
@@ -92,16 +102,22 @@ function Clientes() {
         nombre,
         telefono,
         direccion,
-        deuda,
+        deuda: parseFloat(deuda),
         comentariosAdicionales,
         createdAt: Date.now(),
+        creadoPor: emailUsuario,
       };
 
       const nuevoId = await agregarCliente(nuevoClienteObj);
       const nuevoCliente = { id: nuevoId, ...nuevoClienteObj };
       toast.success("Cliente agregado con éxito");
 
-      setClientes((prev) => [nuevoCliente, ...prev]);
+      setClientes((prev) => {
+        const nuevosClientes = [nuevoCliente, ...prev];
+        calcularDeudaTotal(nuevosClientes); // ✅ recalculamos deuda total
+        return nuevosClientes;
+      });
+
       resetFormulario();
       setMostrarModal(false);
     } catch (error) {
@@ -110,6 +126,7 @@ function Clientes() {
       setIsLoading(false);
     }
   };
+
 
   const handleBorrarCliente = async (id) => {
     const confirmacion = prompt(
@@ -184,6 +201,10 @@ function Clientes() {
       <div className="clientes__lista">
         <div className="clientes__lista-header">
           <h2 className="clientes__lista-title">Lista de Clientes</h2>
+          <div className="usuario-logeado" style={{ marginBottom: "1rem" }}>
+            <strong>Usuario logeado como:</strong> {usuarioLogeado}
+          </div>
+
           <button
             onClick={() => setMostrarModal(true)}
             className="clientes__abrir-modal"
@@ -200,7 +221,11 @@ function Clientes() {
           className="clientes__buscar"
         />
 
-        <select value={ordenSeleccionado} onChange={(e) => setOrdenSeleccionado(e.target.value)} className="clientes__orden-select">
+        <select
+          value={ordenSeleccionado}
+          onChange={(e) => setOrdenSeleccionado(e.target.value)}
+          className="clientes__orden-select"
+        >
           <option value="recientes">Más recientes</option>
           <option value="deudaAsc">Deuda: menor a mayor</option>
           <option value="deudaDesc">Deuda: mayor a menor</option>
@@ -222,6 +247,7 @@ function Clientes() {
                   <h4>Nombre: {cliente.nombre}</h4>
                   <h4>Teléfono: {cliente.telefono}</h4>
                   <h4>Dirección: {cliente.direccion}</h4>
+                  {/* Aquí se eliminó el "Creado por" */}
                   <h4>
                     Deuda: ${Number(cliente.deuda).toLocaleString("es-AR")}
                   </h4>
@@ -320,7 +346,11 @@ function Clientes() {
                 value={comentariosAdicionales}
                 onChange={(e) => setComentariosAdicionales(e.target.value)}
               />
-              <button type="submit" className="clientes__modal-button" disabled={isLoading}>
+              <button
+                type="submit"
+                className="clientes__modal-button"
+                disabled={isLoading}
+              >
                 {isLoading ? "Agregando..." : "Agregar"}
               </button>
             </form>
