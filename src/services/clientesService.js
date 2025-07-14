@@ -15,6 +15,34 @@ import { getAuth } from "firebase/auth";
 // Convierte un email a un ID seguro para Firestore (evita puntos y @)
 const emailAId = (email) => email.replace(/\./g, "_").replace(/@/g, "-");
 
+export const obtenerHistorialCliente = async (clienteId) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("Usuario no autenticado");
+
+  const historialRef = collection(db, "usuarios", emailAId(user.email), "clientes", clienteId, "historial");
+  const snapshot = await getDocs(historialRef);
+
+  return snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })).sort((a, b) => b.timestamp - a.timestamp);
+};
+
+export const registrarHistorial = async (clienteId, operacion, monto) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) throw new Error("Usuario no autenticado");
+
+  const historialRef = collection(db, "usuarios", emailAId(user.email), "clientes", clienteId, "historial");
+  await addDoc(historialRef, {
+    operacion,
+    monto,
+    timestamp: Date.now(),
+    realizadoPor: user.email,
+  });
+};
+
 export const agregarCliente = async (cliente) => {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -23,11 +51,9 @@ export const agregarCliente = async (cliente) => {
   const email = user.email;
   const userIdTransformado = emailAId(email);
 
-  // Crear el documento del usuario si no existe
   const usuarioRef = doc(db, "usuarios", userIdTransformado);
   await setDoc(usuarioRef, { email }, { merge: true });
 
-  // Guardar cliente en subcolección "clientes"
   const clientesRef = collection(db, "usuarios", userIdTransformado, "clientes");
   const docRef = await addDoc(clientesRef, cliente);
   return docRef.id;
@@ -97,10 +123,11 @@ export const restarDeuda = async (clienteId, monto) => {
   const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
   const snapshot = await getDoc(clienteRef);
   const actual = snapshot.data()?.deuda || 0;
-  const nuevaDeuda = Math.max(actual - monto, 0);
+  const nuevaDeuda = actual - monto;
   await updateDoc(clienteRef, { deuda: nuevaDeuda });
   return nuevaDeuda;
 };
+
 
 export const calcularDeudaTotal = async () => {
   const auth = getAuth();

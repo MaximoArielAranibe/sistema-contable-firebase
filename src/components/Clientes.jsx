@@ -8,9 +8,13 @@ import {
   restarDeuda,
   sumarDeuda,
   modificarCliente,
+  registrarHistorial,
+  obtenerHistorialCliente,
 } from "../services/clientesService";
 import "../styles/clientes.scss";
 import { getAuth } from "firebase/auth";
+import Spinner from "./Spinner";
+import { Circles } from 'react-loader-spinner';
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -20,21 +24,25 @@ function Clientes() {
   const [deuda, setDeuda] = useState("");
   const [comentariosAdicionales, setComentariosAdicionales] = useState("");
   const [busqueda, setBusqueda] = useState("");
+  const [deudaTotal, setDeudaToobal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const [editandoComentario, setEditandoComentario] = useState(null);
   const [nuevoComentario, setNuevoComentario] = useState("");
   const [mostrarModal, setMostrarModal] = useState(false);
-  const [deudaTotal, setDeudaToobal] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [ordenSeleccionado, setOrdenSeleccionado] = useState("recientes");
-
-  // Nuevo estado para usuario logeado
+  const [historiales, setHistoriales] = useState({});
+  const [clienteHistorialVisible, setClienteHistorialVisible] = useState(null);
   const [usuarioLogeado, setUsuarioLogeado] = useState("");
+  const [historialesVisibles, setHistorialesVisibles] = useState({});
+  const [historialesCargando, setHistorialesCargando] = useState({});
+  const [cargandoMasHistorial, setCargandoMasHistorial] = useState({});
+
+
 
   useEffect(() => {
     const auth = getAuth();
     const userEmail = auth.currentUser?.email || "Desconocido";
     setUsuarioLogeado(userEmail);
-
     cargarClientes();
   }, []);
 
@@ -46,7 +54,6 @@ function Clientes() {
     setDeudaToobal(total);
   };
 
-
   const cargarClientes = async () => {
     try {
       const lista = await obtenerClientes();
@@ -57,25 +64,43 @@ function Clientes() {
     }
   };
 
+  const toggleHistorial = async (clienteId) => {
+    if (clienteHistorialVisible === clienteId) {
+      setClienteHistorialVisible(null);
+      return;
+    }
+
+    setHistorialesCargando((prev) => ({ ...prev, [clienteId]: true }))
+
+    try {
+      const historial = await obtenerHistorialCliente(clienteId);
+      setHistoriales((prev) => ({ ...prev, [clienteId]: historial }));
+      setHistorialesVisibles((prev) => ({ ...prev, [clienteId]: 5 }));
+      setClienteHistorialVisible(clienteId);
+    } catch (error) {
+      toast.error("Error al cargar historial: " + error.message);
+    } finally {
+      setHistorialesCargando((prev) => ({ ...prev, [clienteId]: false }))
+    }
+  };
+
   const clientesOrdenados = [...clientes]
-    .filter((cliente) =>
-      busqueda.trim()
-        ? [cliente.nombre, cliente.telefono, cliente.direccion, cliente.comentariosAdicionales]
-          .some((campo) => campo?.toLowerCase().includes(busqueda.toLowerCase()))
-        : true
-    )
+    .filter((cliente) => {
+      if (!busqueda.trim()) return true;
+      return [
+        cliente.nombre,
+        cliente.telefono,
+        cliente.direccion,
+        cliente.comentariosAdicionales,
+      ].some((campo) => campo?.toLowerCase().includes(busqueda.toLowerCase()));
+    })
     .sort((a, b) => {
       switch (ordenSeleccionado) {
-        case "deudaAsc":
-          return parseFloat(a.deuda || 0) - parseFloat(b.deuda || 0);
-        case "deudaDesc":
-          return parseFloat(b.deuda || 0) - parseFloat(a.deuda || 0);
-        case "nombreAZ":
-          return a.nombre.localeCompare(b.nombre);
-        case "nombreZA":
-          return b.nombre.localeCompare(a.nombre);
-        default:
-          return b.createdAt - a.createdAt;
+        case "deudaAsc": return parseFloat(a.deuda || 0) - parseFloat(b.deuda || 0);
+        case "deudaDesc": return parseFloat(b.deuda || 0) - parseFloat(a.deuda || 0);
+        case "nombreAZ": return a.nombre.localeCompare(b.nombre);
+        case "nombreZA": return b.nombre.localeCompare(a.nombre);
+        default: return b.createdAt - a.createdAt;
       }
     });
 
@@ -114,7 +139,7 @@ function Clientes() {
 
       setClientes((prev) => {
         const nuevosClientes = [nuevoCliente, ...prev];
-        calcularDeudaTotal(nuevosClientes); // ✅ recalculamos deuda total
+        calcularDeudaTotal(nuevosClientes);
         return nuevosClientes;
       });
 
@@ -127,15 +152,9 @@ function Clientes() {
     }
   };
 
-
   const handleBorrarCliente = async (id) => {
-    const confirmacion = prompt(
-      "Si estás seguro de eliminar este cliente, escribí: eliminar"
-    );
-
-    confirmacion.toLowerCase();
-
-    if (confirmacion !== "eliminar") {
+    const confirmacion = prompt("Si estás seguro de eliminar este cliente, escribí: eliminar");
+    if (confirmacion?.toLowerCase() !== "eliminar") {
       toast.warning("Cancelado. No se eliminó el cliente.");
       return;
     }
@@ -149,18 +168,22 @@ function Clientes() {
   };
 
   const actualizarDeuda = async (id, operacion, name) => {
-    const input = prompt(
-      `¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name} ?`
-    );
+    const input = prompt(`¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name} ?`);
     const monto = parseFloat(input);
-    if (isNaN(monto) || monto <= 0)
-      return alert("Ingresá un número válido mayor que cero");
+    if (isNaN(monto) || monto <= 0) return alert("Ingresá un número válido mayor que cero");
 
     try {
       const nuevaDeuda =
         operacion === "sumar"
           ? await sumarDeuda(id, monto)
           : await restarDeuda(id, monto);
+
+      await registrarHistorial(id, operacion, monto);
+
+      if (clienteHistorialVisible === id) {
+        const historialActualizado = await obtenerHistorialCliente(id);
+        setHistoriales((prev) => ({ ...prev, [id]: historialActualizado }));
+      }
 
       setClientes((prev) => {
         const actualizados = prev.map((c) =>
@@ -176,18 +199,12 @@ function Clientes() {
 
   const guardarComentario = async (clienteId) => {
     try {
-      await modificarCliente(clienteId, {
-        comentariosAdicionales: nuevoComentario,
-      });
-
+      await modificarCliente(clienteId, { comentariosAdicionales: nuevoComentario });
       setClientes((prev) =>
         prev.map((c) =>
-          c.id === clienteId
-            ? { ...c, comentariosAdicionales: nuevoComentario }
-            : c
+          c.id === clienteId ? { ...c, comentariosAdicionales: nuevoComentario } : c
         )
       );
-
       toast.success("Comentario actualizado");
       setEditandoComentario(null);
       setNuevoComentario("");
@@ -247,9 +264,14 @@ function Clientes() {
                   <h4>Nombre: {cliente.nombre}</h4>
                   <h4>Teléfono: {cliente.telefono}</h4>
                   <h4>Dirección: {cliente.direccion}</h4>
-                  {/* Aquí se eliminó el "Creado por" */}
                   <h4>
-                    Deuda: ${Number(cliente.deuda).toLocaleString("es-AR")}
+                    <h4>
+                      Deuda:{" "}
+                      {cliente.deuda < 0
+                        ? `$${Math.abs(cliente.deuda).toLocaleString("es-AR")} a favor`
+                        : `$${cliente.deuda.toLocaleString("es-AR")}`}
+                    </h4>
+
                   </h4>
                   <h4>
                     Comentarios:{" "}
@@ -302,7 +324,61 @@ function Clientes() {
                   >
                     ➕
                   </button>
+                  <button onClick={() => toggleHistorial(cliente.id)}>
+                    {clienteHistorialVisible === cliente.id
+                      ? "Ocultar Historial"
+                      : "Ver Historial"}
+                  </button>
                 </div>
+                {clienteHistorialVisible === cliente.id && (
+                  <div className="cliente__historial">
+                    {historialesCargando[cliente.id] ? (
+                      <Spinner />
+                    ) : historiales[cliente.id]?.length > 0 ? (
+                      <>
+                        <ul>
+                          {historiales[cliente.id]
+                            .slice(0, historialesVisibles[cliente.id] || 5)
+                            .map((h) => (
+                              <li key={h.id}>
+                                <strong>{h.operacion === "sumar" ? "➕" : "➖"}</strong> ${h.monto} el{" "}
+                                {new Date(h.timestamp).toLocaleString("es-AR")} por {h.realizadoPor}
+                              </li>
+                            ))}
+                        </ul>
+
+                        {historialesVisibles[cliente.id] < historiales[cliente.id].length && (
+                          cargandoMasHistorial[cliente.id] ? (
+                            <Spinner />
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                setCargandoMasHistorial((prev) => ({
+                                  ...prev,
+                                  [cliente.id]: true,
+                                }));
+                                await new Promise((res) => setTimeout(res, 2000));
+                                setHistorialesVisibles((prev) => ({
+                                  ...prev,
+                                  [cliente.id]: prev[cliente.id] + 5,
+                                }));
+                                setCargandoMasHistorial((prev) => ({
+                                  ...prev,
+                                  [cliente.id]: false,
+                                }));
+                              }}
+                            >
+                              Cargar más
+                            </button>
+                          )
+                        )}
+                      </>
+                    ) : (
+                      <p>No hay historial aún.</p>
+                    )}
+                  </div>
+                )}
+
               </li>
             ))}
           </ul>
@@ -319,7 +395,10 @@ function Clientes() {
               ✖
             </button>
             <h2 className="clientes__modal-title">Agregar Cliente</h2>
-            <form onSubmit={handleAgregarCliente} className="clientes__modal-form">
+            <form
+              onSubmit={handleAgregarCliente}
+              className="clientes__modal-form"
+            >
               <input
                 placeholder="Nombre"
                 value={nombre}
@@ -344,7 +423,9 @@ function Clientes() {
               <input
                 placeholder="Comentarios adicionales..."
                 value={comentariosAdicionales}
-                onChange={(e) => setComentariosAdicionales(e.target.value)}
+                onChange={(e) =>
+                  setComentariosAdicionales(e.target.value)
+                }
               />
               <button
                 type="submit"
@@ -357,7 +438,6 @@ function Clientes() {
           </div>
         </div>
       )}
-
       <ToastContainer position="top-center" autoClose={3000} />
     </div>
   );
