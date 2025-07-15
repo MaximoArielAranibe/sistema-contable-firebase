@@ -13,10 +13,8 @@ import {
 } from "../services/clientesService";
 import "../styles/clientes.scss";
 import { getAuth } from "firebase/auth";
-import Spinner from "../components/Spinner";
 import ModalAgregarCliente from "../components/Clientes/ModalAgregarCliente";
 import ClienteCard from "../components/Clientes/ClienteCard";
-import HistorialCliente from "../components/Clientes/HistorialCliente";
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);
@@ -26,7 +24,7 @@ function Clientes() {
   const [deuda, setDeuda] = useState("");
   const [comentariosAdicionales, setComentariosAdicionales] = useState("");
   const [busqueda, setBusqueda] = useState("");
-  const [deudaTotal, setDeudaToobal] = useState(0);
+  const [deudaTotal, setDeudaTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [editandoComentario, setEditandoComentario] = useState(null);
   const [nuevoComentario, setNuevoComentario] = useState("");
@@ -53,7 +51,7 @@ function Clientes() {
       const deudaNumerica = parseFloat(cliente.deuda);
       return acc + (isNaN(deudaNumerica) ? 0 : deudaNumerica);
     }, 0);
-    setDeudaToobal(total);
+    setDeudaTotal(total);
   };
 
   const cargarClientes = async () => {
@@ -163,10 +161,15 @@ function Clientes() {
 
     try {
       await eliminarCliente(id);
-      setClientes((prev) => prev.filter((cliente) => cliente.id !== id));
+      setClientes((prev) => {
+        const actualizados = prev.filter((cliente) => cliente.id !== id);
+        calcularDeudaTotal(actualizados); // 👈 recalcula la deuda total
+        return actualizados;
+      });
     } catch (error) {
       alert("Error al eliminar al cliente: " + error.message);
     }
+
   };
 
   const actualizarDeuda = async (id, operacion, name) => {
