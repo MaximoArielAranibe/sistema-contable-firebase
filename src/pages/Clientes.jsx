@@ -16,6 +16,7 @@ import { getAuth } from "firebase/auth";
 import Spinner from "../components/Spinner";
 import ModalAgregarCliente from "../components/Clientes/ModalAgregarCliente";
 import ClienteCard from "../components/Clientes/ClienteCard";
+import HistorialCliente from "../components/Clientes/HistorialCliente";
 
 function Clientes() {
   const [clientes, setClientes] = useState([]);

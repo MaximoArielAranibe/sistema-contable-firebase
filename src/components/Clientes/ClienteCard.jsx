@@ -1,5 +1,6 @@
 import React from "react";
 import Spinner from "../../components/Spinner";
+import HistorialCliente from "./HistorialCliente";
 
 function ClienteCard({
   cliente,
@@ -81,57 +82,18 @@ function ClienteCard({
             : "Ver Historial"}
         </button>
       </div>
-
       {clienteHistorialVisible === cliente.id && (
-        <div className="cliente__historial">
-          {historialesCargando[cliente.id] ? (
-            <Spinner />
-          ) : historiales[cliente.id]?.length > 0 ? (
-            <>
-              <ul>
-                {historiales[cliente.id]
-                  .slice(0, historialesVisibles[cliente.id] || 5)
-                  .map((h) => (
-                    <li key={h.id}>
-                      <strong>{h.operacion === "sumar" ? "➕" : "➖"}</strong> $
-                      {h.monto} el{" "}
-                      {new Date(h.timestamp).toLocaleString("es-AR")} por{" "}
-                      {h.realizadoPor}
-                    </li>
-                  ))}
-              </ul>
-
-              {historialesVisibles[cliente.id] <
-                historiales[cliente.id].length &&
-                (cargandoMasHistorial[cliente.id] ? (
-                  <Spinner />
-                ) : (
-                  <button
-                    onClick={async () => {
-                      setCargandoMasHistorial((prev) => ({
-                        ...prev,
-                        [cliente.id]: true,
-                      }));
-                      await new Promise((res) => setTimeout(res, 2000));
-                      setHistorialesVisibles((prev) => ({
-                        ...prev,
-                        [cliente.id]: prev[cliente.id] + 5,
-                      }));
-                      setCargandoMasHistorial((prev) => ({
-                        ...prev,
-                        [cliente.id]: false,
-                      }));
-                    }}
-                  >
-                    Cargar más
-                  </button>
-                ))}
-            </>
-          ) : (
-            <p>No hay historial aún.</p>
-          )}
-        </div>
+        <HistorialCliente
+          clienteId={cliente.id}
+          historial={historiales[cliente.id]}
+          cargando={historialesCargando[cliente.id]}
+          historialVisible={historialesVisibles[cliente.id]}
+          setHistorialesVisibles={setHistorialesVisibles}
+          cargandoMas={cargandoMasHistorial[cliente.id]}
+          setCargandoMasHistorial={setCargandoMasHistorial}
+        />
       )}
+
     </li>
   );
 }
