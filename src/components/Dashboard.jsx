@@ -1,5 +1,5 @@
 import React from 'react';
-import Clientes from './Clientes';
+import Clientes from '../pages/Clientes';
 import '../styles/dashboard.scss'
 
 export default function Dashboard() {
