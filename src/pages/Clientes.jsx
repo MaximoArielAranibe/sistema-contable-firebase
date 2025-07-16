@@ -1,9 +1,8 @@
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   agregarCliente,
-  obtenerClientes,
   eliminarCliente,
   restarDeuda,
   sumarDeuda,
@@ -12,77 +11,40 @@ import {
   obtenerHistorialCliente,
 } from "../services/clientesService";
 import "../styles/clientes.scss";
-import { getAuth } from "firebase/auth";
 import ModalAgregarCliente from "../components/Clientes/ModalAgregarCliente";
 import ClienteCard from "../components/Clientes/ClienteCard";
+import { useClientes } from "../hooks/useClientes";
 
 function Clientes() {
-  const [clientes, setClientes] = useState([]);
+  const {
+    clientes,
+    setClientes,
+    deudaTotal,
+    calcularDeudaTotal,
+    historiales,
+    setHistoriales,
+    clienteHistorialVisible,
+    historialesVisibles,
+    setHistorialesVisibles,
+    historialesCargando,
+    cargandoMasHistorial,
+    setCargandoMasHistorial,
+    usuarioLogeado,
+    toggleHistorial,
+  } = useClientes();
+
+  // Estados propios del componente
+  const [mostrarModal, setMostrarModal] = useState(false);
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
   const [deuda, setDeuda] = useState("");
   const [comentariosAdicionales, setComentariosAdicionales] = useState("");
   const [busqueda, setBusqueda] = useState("");
-  const [deudaTotal, setDeudaTotal] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
+  const [ordenSeleccionado, setOrdenSeleccionado] = useState("recientes");
   const [editandoComentario, setEditandoComentario] = useState(null);
   const [nuevoComentario, setNuevoComentario] = useState("");
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [ordenSeleccionado, setOrdenSeleccionado] = useState("recientes");
-  const [historiales, setHistoriales] = useState({});
-  const [clienteHistorialVisible, setClienteHistorialVisible] = useState(null);
-  const [usuarioLogeado, setUsuarioLogeado] = useState("");
-  const [historialesVisibles, setHistorialesVisibles] = useState({});
-  const [historialesCargando, setHistorialesCargando] = useState({});
-  const [cargandoMasHistorial, setCargandoMasHistorial] = useState({});
-
-
-
-  useEffect(() => {
-    const auth = getAuth();
-    const userEmail = auth.currentUser?.email || "Desconocido";
-    setUsuarioLogeado(userEmail);
-    cargarClientes();
-  }, []);
-
-  const calcularDeudaTotal = (clientes) => {
-    const total = clientes.reduce((acc, cliente) => {
-      const deudaNumerica = parseFloat(cliente.deuda);
-      return acc + (isNaN(deudaNumerica) ? 0 : deudaNumerica);
-    }, 0);
-    setDeudaTotal(total);
-  };
-
-  const cargarClientes = async () => {
-    try {
-      const lista = await obtenerClientes();
-      setClientes(lista);
-      calcularDeudaTotal(lista);
-    } catch (error) {
-      alert("Error al cargar clientes: " + error.message);
-    }
-  };
-
-  const toggleHistorial = async (clienteId) => {
-    if (clienteHistorialVisible === clienteId) {
-      setClienteHistorialVisible(null);
-      return;
-    }
-
-    setHistorialesCargando((prev) => ({ ...prev, [clienteId]: true }))
-
-    try {
-      const historial = await obtenerHistorialCliente(clienteId);
-      setHistoriales((prev) => ({ ...prev, [clienteId]: historial }));
-      setHistorialesVisibles((prev) => ({ ...prev, [clienteId]: 5 }));
-      setClienteHistorialVisible(clienteId);
-    } catch (error) {
-      toast.error("Error al cargar historial: " + error.message);
-    } finally {
-      setHistorialesCargando((prev) => ({ ...prev, [clienteId]: false }))
-    }
-  };
+  const [isLoading, setIsLoading] = useState(false);
 
   const clientesOrdenados = [...clientes]
     .filter((cliente) => {
@@ -114,8 +76,6 @@ function Clientes() {
 
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
-    const auth = getAuth();
-    const emailUsuario = auth.currentUser?.email || "sin email";
     if (![nombre, telefono, direccion, deuda].every((campo) => campo.trim())) {
       toast.warning("Completa todos los campos");
       return;
@@ -130,7 +90,7 @@ function Clientes() {
         deuda: parseFloat(deuda),
         comentariosAdicionales,
         createdAt: Date.now(),
-        creadoPor: emailUsuario,
+        creadoPor: usuarioLogeado,
       };
 
       const nuevoId = await agregarCliente(nuevoClienteObj);
@@ -163,17 +123,16 @@ function Clientes() {
       await eliminarCliente(id);
       setClientes((prev) => {
         const actualizados = prev.filter((cliente) => cliente.id !== id);
-        calcularDeudaTotal(actualizados); // 👈 recalcula la deuda total
+        calcularDeudaTotal(actualizados);
         return actualizados;
       });
     } catch (error) {
       alert("Error al eliminar al cliente: " + error.message);
     }
-
   };
 
   const actualizarDeuda = async (id, operacion, name) => {
-    const input = prompt(`¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name} ?`);
+    const input = prompt(`¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name}?`);
     const monto = parseFloat(input);
     if (isNaN(monto) || monto <= 0) return alert("Ingresá un número válido mayor que cero");
 
