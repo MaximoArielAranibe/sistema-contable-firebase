@@ -4,16 +4,19 @@ import React, { useState } from "react";
 import {
   agregarCliente,
   eliminarCliente,
-  restarDeuda,
-  sumarDeuda,
-  modificarCliente,
-  registrarHistorial,
-  obtenerHistorialCliente,
 } from "../services/clientesService";
-import "../styles/clientes.scss";
+import "../styles/index.scss";
 import ModalAgregarCliente from "../components/Clientes/ModalAgregarCliente";
 import ClienteCard from "../components/Clientes/ClienteCard";
 import { useClientes } from "../hooks/useClientes";
+import { useFormularioCliente } from "../hooks/useFormularioCliente";
+import { ordenarYFiltrarClientes } from "../helpers/ordenarClientes";
+import {
+  actualizarDeudaCliente,
+  guardarComentarioCliente
+} from "../helpers/clienteActions";
+
+
 
 function Clientes() {
   const {
@@ -33,46 +36,24 @@ function Clientes() {
     toggleHistorial,
   } = useClientes();
 
+  const {
+    nombre, setNombre,
+    telefono, setTelefono,
+    direccion, setDireccion,
+    deuda, setDeuda,
+    comentariosAdicionales, setComentariosAdicionales,
+    resetFormulario
+  } = useFormularioCliente();
+
   // Estados propios del componente
   const [mostrarModal, setMostrarModal] = useState(false);
-  const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [deuda, setDeuda] = useState("");
-  const [comentariosAdicionales, setComentariosAdicionales] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [ordenSeleccionado, setOrdenSeleccionado] = useState("recientes");
   const [editandoComentario, setEditandoComentario] = useState(null);
   const [nuevoComentario, setNuevoComentario] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const clientesOrdenados = [...clientes]
-    .filter((cliente) => {
-      if (!busqueda.trim()) return true;
-      return [
-        cliente.nombre,
-        cliente.telefono,
-        cliente.direccion,
-        cliente.comentariosAdicionales,
-      ].some((campo) => campo?.toLowerCase().includes(busqueda.toLowerCase()));
-    })
-    .sort((a, b) => {
-      switch (ordenSeleccionado) {
-        case "deudaAsc": return parseFloat(a.deuda || 0) - parseFloat(b.deuda || 0);
-        case "deudaDesc": return parseFloat(b.deuda || 0) - parseFloat(a.deuda || 0);
-        case "nombreAZ": return a.nombre.localeCompare(b.nombre);
-        case "nombreZA": return b.nombre.localeCompare(a.nombre);
-        default: return b.createdAt - a.createdAt;
-      }
-    });
-
-  const resetFormulario = () => {
-    setNombre("");
-    setTelefono("");
-    setDireccion("");
-    setDeuda("");
-    setComentariosAdicionales("");
-  };
+  const clientesOrdenados = ordenarYFiltrarClientes(clientes, busqueda, ordenSeleccionado);
 
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
@@ -131,50 +112,26 @@ function Clientes() {
     }
   };
 
-  const actualizarDeuda = async (id, operacion, name) => {
-    const input = prompt(`¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name}?`);
-    const monto = parseFloat(input);
-    if (isNaN(monto) || monto <= 0) return alert("Ingresá un número válido mayor que cero");
-
-    try {
-      const nuevaDeuda =
-        operacion === "sumar"
-          ? await sumarDeuda(id, monto)
-          : await restarDeuda(id, monto);
-
-      await registrarHistorial(id, operacion, monto);
-
-      if (clienteHistorialVisible === id) {
-        const historialActualizado = await obtenerHistorialCliente(id);
-        setHistoriales((prev) => ({ ...prev, [id]: historialActualizado }));
-      }
-
-      setClientes((prev) => {
-        const actualizados = prev.map((c) =>
-          c.id === id ? { ...c, deuda: nuevaDeuda } : c
-        );
-        calcularDeudaTotal(actualizados);
-        return actualizados;
-      });
-    } catch (error) {
-      alert(`Error al ${operacion} deuda: ` + error.message);
-    }
+  const actualizarDeuda = (id, operacion, name) => {
+    actualizarDeudaCliente({
+      id,
+      operacion,
+      name,
+      setClientes,
+      calcularDeudaTotal,
+      setHistoriales,
+      clienteHistorialVisible
+    });
   };
 
-  const guardarComentario = async (clienteId) => {
-    try {
-      await modificarCliente(clienteId, { comentariosAdicionales: nuevoComentario });
-      setClientes((prev) =>
-        prev.map((c) =>
-          c.id === clienteId ? { ...c, comentariosAdicionales: nuevoComentario } : c
-        )
-      );
-      toast.success("Comentario actualizado");
-      setEditandoComentario(null);
-      setNuevoComentario("");
-    } catch (error) {
-      toast.error("Error al actualizar comentario: " + error.message);
-    }
+  const guardarComentario = (clienteId) => {
+    guardarComentarioCliente({
+      clienteId,
+      nuevoComentario,
+      setClientes,
+      setEditandoComentario,
+      setNuevoComentario
+    });
   };
 
   return (
@@ -188,7 +145,7 @@ function Clientes() {
 
           <button
             onClick={() => setMostrarModal(true)}
-            className="clientes__abrir-modal"
+            className="clientes__modal-abrir"
           >
             + Agregar Cliente
           </button>

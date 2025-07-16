@@ -1,6 +1,6 @@
 import React from 'react';
 import Clientes from '../pages/Clientes';
-import '../styles/dashboard.scss'
+import '../styles/index.scss'
 
 export default function Dashboard() {
   return (

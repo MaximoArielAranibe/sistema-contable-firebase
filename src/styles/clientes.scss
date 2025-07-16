@@ -202,6 +202,16 @@
     animation: aparecerModal 0.25s ease-in-out;
   }
 
+  &__modal-abrir{
+    padding: 0.4rem 0.8rem;
+    color: #FFF;
+    background-color: #006cdc;
+    border-radius: 10px;
+    font-weight: 700;
+    border: solid 1px #002f91;
+    font-family: 'Courier New', Courier, monospace;
+  }
+
   &__modal-cerrar {
     position: absolute;
     top: 1rem;

@@ -1,7 +1,7 @@
 // src/components/Login.jsx
 import { useState } from 'react';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import '../styles/login.scss'
+import '../styles/index.scss'
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {

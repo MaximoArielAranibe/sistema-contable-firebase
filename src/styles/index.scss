@@ -1,3 +1,11 @@
+@use './variables' as *;       // Primero las variables/mixins
+
+@use './clientes.scss';
+@use './dashboard.scss';
+@use './historialCliente.scss';
+@use './login.scss';
+
+
 html, body {
   margin: 0;
   padding: 0;
