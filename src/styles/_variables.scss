@@ -1,1 +1,16 @@
-@use './mixins' as *;
+@use './mixins'as *;
+
+
+.button-lapiz {
+  background: "none";
+    border: "none";
+    padding: 0;
+    cursor: "pointer";
+    font-size: 1rem;
+}
+
+.d-flex-row{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}

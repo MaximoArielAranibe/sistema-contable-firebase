@@ -202,28 +202,29 @@
     animation: aparecerModal 0.25s ease-in-out;
   }
 
-  &__modal-abrir{
-    padding: 0.4rem 0.8rem;
-    color: #FFF;
-    background-color: #006cdc;
-    border-radius: 10px;
-    font-weight: 700;
-    border: solid 1px #002f91;
-    font-family: 'Courier New', Courier, monospace;
-  }
-
-  &__modal-cerrar {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    font-size: 1.5rem;
-    background: transparent;
+  .clientes__modal-abrir {
+    background-color: #2563eb; // azul intenso (como Tailwind blue-600)
+    color: white;
+    padding: 0.64rem 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
     border: none;
+    border-radius: 0.5rem;
     cursor: pointer;
-    color: #333;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease, transform 0.1s ease;
 
     &:hover {
-      color: #ff4c4c;
+      background-color: #1d4ed8; // azul más oscuro
+    }
+
+    &:active {
+      transform: scale(0.98);
+    }
+
+    &:focus {
+      outline: 2px solid #93c5fd; // azul claro
+      outline-offset: 2px;
     }
   }
 }
@@ -274,4 +275,3 @@
   border-radius: 6px;
   border: 1px solid #ccc;
 }
-

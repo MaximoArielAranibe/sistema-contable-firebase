@@ -13,7 +13,8 @@ import { useFormularioCliente } from "../hooks/useFormularioCliente";
 import { ordenarYFiltrarClientes } from "../helpers/ordenarClientes";
 import {
   actualizarDeudaCliente,
-  guardarComentarioCliente
+  guardarComentarioCliente,
+  actualizarNombreCliente
 } from "../helpers/clienteActions";
 
 
@@ -54,6 +55,8 @@ function Clientes() {
   const [isLoading, setIsLoading] = useState(false);
 
   const clientesOrdenados = ordenarYFiltrarClientes(clientes, busqueda, ordenSeleccionado);
+
+
 
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
@@ -111,6 +114,11 @@ function Clientes() {
       alert("Error al eliminar al cliente: " + error.message);
     }
   };
+
+  const handleCambiarNombreCliente = (clienteId, nombreActual) => {
+    actualizarNombreCliente({ clienteId, nombreActual, setClientes });
+  };
+
 
   const actualizarDeuda = (id, operacion, name) => {
     actualizarDeudaCliente({
@@ -197,6 +205,7 @@ function Clientes() {
                 cargandoMasHistorial={cargandoMasHistorial}
                 setCargandoMasHistorial={setCargandoMasHistorial}
                 historialesCargando={historialesCargando}
+                handleCambiarNombreCliente={handleCambiarNombreCliente}
               />
             ))}
           </ul>

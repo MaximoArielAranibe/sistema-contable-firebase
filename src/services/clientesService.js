@@ -146,3 +146,30 @@ export const calcularDeudaTotal = async () => {
   });
   return total;
 };
+
+
+export const modificarNombre = async (clienteId, nuevoNombre) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (!user) return 0;
+
+  const email = user.email;
+  const userIdTransformado = emailAId(email);
+  const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
+
+
+  try {
+    const snapshot = await getDoc(clienteRef);
+    if (!snapshot.exists()) throw new Error("El cliente no existe");
+
+    await updateDoc(clienteRef, {
+      nombre: nuevoNombre.trim()
+    });
+
+    return 1;
+  } catch (error) {
+    console.error("Error al modificar el nombre:", error);
+    return 0;
+  }
+}

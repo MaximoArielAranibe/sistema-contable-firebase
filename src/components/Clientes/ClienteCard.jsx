@@ -19,11 +19,22 @@ function ClienteCard({
   cargandoMasHistorial,
   setCargandoMasHistorial,
   historialesCargando,
+  handleCambiarNombreCliente
 }) {
   return (
     <li key={cliente.id} className="cliente">
       <div className="cliente__info">
-        <h4>Nombre: {cliente.nombre}</h4>
+        <h4 className="d-flex-row">
+          Nombre: {cliente.nombre}{" "}
+          <button
+            onClick={() => handleCambiarNombreCliente(cliente.id, cliente.nombre)}
+            className="button-lapiz"
+            aria-label="Editar nombre"
+          >
+            ✏️
+          </button>
+        </h4>
+
         <h4>Teléfono: {cliente.telefono}</h4>
         <h4>Dirección: {cliente.direccion}</h4>
         <h4>
@@ -32,7 +43,7 @@ function ClienteCard({
             ? `$${Math.abs(cliente.deuda).toLocaleString("es-AR")} a favor`
             : `$${cliente.deuda.toLocaleString("es-AR")}`}
         </h4>
-        <h4>
+        <h4 className="">
           Comentarios:{" "}
           {editandoComentario === cliente.id ? (
             <>
@@ -41,12 +52,8 @@ function ClienteCard({
                 value={nuevoComentario}
                 onChange={(e) => setNuevoComentario(e.target.value)}
               />
-              <button onClick={() => guardarComentario(cliente.id)}>
-                Guardar
-              </button>
-              <button onClick={() => setEditandoComentario(null)}>
-                Cancelar
-              </button>
+              <button onClick={() => guardarComentario(cliente.id)}>Guardar</button>
+              <button onClick={() => setEditandoComentario(null)}>Cancelar</button>
             </>
           ) : (
             <>
@@ -56,6 +63,8 @@ function ClienteCard({
                   setEditandoComentario(cliente.id);
                   setNuevoComentario(cliente.comentariosAdicionales || "");
                 }}
+                className="button-lapiz"
+                aria-label="Editar comentario"
               >
                 ✏️
               </button>
@@ -66,22 +75,17 @@ function ClienteCard({
 
       <div className="cliente__funciones">
         <button onClick={() => handleBorrarCliente(cliente.id)}>🗑️</button>
-        <button
-          onClick={() => actualizarDeuda(cliente.id, "restar", cliente.nombre)}
-        >
+        <button onClick={() => actualizarDeuda(cliente.id, "restar", cliente.nombre)}>
           ➖
         </button>
-        <button
-          onClick={() => actualizarDeuda(cliente.id, "sumar", cliente.nombre)}
-        >
+        <button onClick={() => actualizarDeuda(cliente.id, "sumar", cliente.nombre)}>
           ➕
         </button>
         <button onClick={() => toggleHistorial(cliente.id)}>
-          {clienteHistorialVisible === cliente.id
-            ? "Ocultar Historial"
-            : "Ver Historial"}
+          {clienteHistorialVisible === cliente.id ? "Ocultar Historial" : "Ver Historial"}
         </button>
       </div>
+
       {clienteHistorialVisible === cliente.id && (
         <HistorialCliente
           clienteId={cliente.id}
@@ -93,7 +97,6 @@ function ClienteCard({
           setCargandoMasHistorial={setCargandoMasHistorial}
         />
       )}
-
     </li>
   );
 }
