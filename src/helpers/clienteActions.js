@@ -89,3 +89,55 @@ export async function guardarComentarioCliente({
     toast.error("Error al actualizar comentario: " + error.message);
   }
 }
+
+
+export async function actualizarDireccionCliente({ clienteId, direccionActual, setClientes }) {
+
+  const nuevaDireccion = prompt(`Dirección actual: ${direccionActual}\n\nIngresá la nueva dirección:`)
+  if (!nuevaDireccion) {
+    toast.warning("No se ingreso una dirección");
+    return;
+  }
+
+  if (nuevaDireccion === direccionActual) {
+    toast.info("La dirección no cambio porque estas ingresando la misma.")
+    return;
+  }
+
+  try {
+    await modificarCliente(clienteId, { direccion: nuevaDireccion });
+
+    setClientes((prev) => prev.map((c) => c.id === clienteId ? { ...c, direccion: nuevaDireccion } : c));
+    toast.success("Dirección actualizada con éxito.");
+
+  } catch (error) {
+    toast.error("Error al actualizar la dirección: " + error.message);
+  };
+}
+
+export async function actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes }) {
+  if(!telefonoActual){
+    telefonoActual = "No tiene número agendado."
+  }
+  const telefonoNuevo = prompt(`Número actual: ${telefonoActual}\n\nIngrese un nuevo número de teléfono: `);
+
+  if (!telefonoNuevo) {
+    toast.warning("No se ingresó ningun télefono");
+    return;
+  };
+
+
+  if(telefonoNuevo === telefonoActual){
+    toast.info("El número que ingresaste es el mismo que estaba antes.");
+    return;
+  }
+
+
+  try {
+    await modificarCliente(clienteId, { telefono: telefonoNuevo });
+    setClientes((prev) => prev.map((c) => c.id === clienteId ? { ...c, telefono: telefonoNuevo } : c))
+    toast.success("Teléfono actualizado con éxito.")
+  } catch (error) {
+    toast.error("Ha ocurrido un error", error.message)
+  };
+};

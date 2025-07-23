@@ -1,5 +1,4 @@
 import React from "react";
-import Spinner from "../../components/Spinner";
 import HistorialCliente from "./HistorialCliente";
 
 function ClienteCard({
@@ -19,7 +18,9 @@ function ClienteCard({
   cargandoMasHistorial,
   setCargandoMasHistorial,
   historialesCargando,
-  handleCambiarNombreCliente
+  handleActualizarNombreCliente,
+  handleActualizarDireccionCliente,
+  handleActualizarTelefonoCliente
 }) {
   return (
     <li key={cliente.id} className="cliente">
@@ -27,7 +28,7 @@ function ClienteCard({
         <h4 className="d-flex-row">
           Nombre: {cliente.nombre}{" "}
           <button
-            onClick={() => handleCambiarNombreCliente(cliente.id, cliente.nombre)}
+            onClick={() => handleActualizarNombreCliente(cliente.id, cliente.nombre)}
             className="button-lapiz"
             aria-label="Editar nombre"
           >
@@ -35,8 +36,27 @@ function ClienteCard({
           </button>
         </h4>
 
-        <h4>Teléfono: {cliente.telefono}</h4>
-        <h4>Dirección: {cliente.direccion}</h4>
+        <h4>Teléfono: {cliente.telefono}
+          <button
+            onClick={() => handleActualizarTelefonoCliente(cliente.id, cliente.telefono)}
+            className="button-lapiz"
+            aria-label="Editar télefono"
+          >
+            ✏️
+          </button>
+        </h4>
+        <h4>Dirección: {cliente.direccion}
+          <button
+            onClick={() => {
+              handleActualizarDireccionCliente(cliente.id, cliente.direccion)
+            }}
+            className="button-lapiz"
+            aria-label="Editar dirección"
+          >
+            ✏️
+          </button>
+        </h4>
+
         <h4>
           Deuda:{" "}
           {cliente.deuda < 0

@@ -14,7 +14,9 @@ import { ordenarYFiltrarClientes } from "../helpers/ordenarClientes";
 import {
   actualizarDeudaCliente,
   guardarComentarioCliente,
-  actualizarNombreCliente
+  actualizarNombreCliente,
+  actualizarDireccionCliente,
+  actualizarTelefonoCliente
 } from "../helpers/clienteActions";
 
 
@@ -115,10 +117,17 @@ function Clientes() {
     }
   };
 
-  const handleCambiarNombreCliente = (clienteId, nombreActual) => {
+  const handleActualizarNombreCliente = (clienteId, nombreActual) => {
     actualizarNombreCliente({ clienteId, nombreActual, setClientes });
   };
 
+  const handleActualizarDireccionCliente = (clienteId, direccionActual) => {
+    actualizarDireccionCliente({ clienteId, direccionActual, setClientes });
+  }
+
+  const handleActualizarTelefonoCliente = (clienteId, telefonoActual) => {
+    actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes });
+  }
 
   const actualizarDeuda = (id, operacion, name) => {
     actualizarDeudaCliente({
@@ -205,7 +214,9 @@ function Clientes() {
                 cargandoMasHistorial={cargandoMasHistorial}
                 setCargandoMasHistorial={setCargandoMasHistorial}
                 historialesCargando={historialesCargando}
-                handleCambiarNombreCliente={handleCambiarNombreCliente}
+                handleActualizarNombreCliente={handleActualizarNombreCliente}
+                handleActualizarDireccionCliente={handleActualizarDireccionCliente}
+                handleActualizarTelefonoCliente={handleActualizarTelefonoCliente}
               />
             ))}
           </ul>
