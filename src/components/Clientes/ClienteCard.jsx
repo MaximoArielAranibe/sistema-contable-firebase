@@ -20,7 +20,8 @@ function ClienteCard({
   historialesCargando,
   handleActualizarNombreCliente,
   handleActualizarDireccionCliente,
-  handleActualizarTelefonoCliente
+  handleActualizarTelefonoCliente,
+  handleActualizarFechaAPagar
 }) {
   return (
     <li key={cliente.id} className="cliente">
@@ -88,6 +89,23 @@ function ClienteCard({
               >
                 ✏️
               </button>
+
+              <h4>
+                Fecha a pagar:{" "}
+                {cliente.fechaAPagar?.toDate
+                  ? cliente.fechaAPagar.toDate().toLocaleDateString("es-AR")
+                  : "Sin fecha"}
+                <button
+                  onClick={() => {
+                    handleActualizarFechaAPagar(cliente.id, cliente.fechaAPagar)
+                  }}
+                  className="button-lapiz"
+                  aria-label="Editar fecha a pagar"
+                >
+                  ✏️
+                </button>
+              </h4>
+
             </>
           )}
         </h4>

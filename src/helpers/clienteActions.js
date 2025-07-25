@@ -6,6 +6,7 @@ import {
   restarDeuda,
 } from "../services/clientesService.js";
 import { toast } from "react-toastify";
+import { Timestamp } from "firebase/firestore";
 
 export async function actualizarNombreCliente({ clienteId, nombreActual, setClientes }) {
   const nuevoNombre = prompt(`Nombre actual: ${nombreActual}\n\nIngresá el nuevo nombre:`)?.trim();
@@ -115,8 +116,46 @@ export async function actualizarDireccionCliente({ clienteId, direccionActual, s
   };
 }
 
+export async function actualizarFechaAPagar({ clienteId, fechaActual, setFechaAPagar }) {
+  const fechaFormateada = fechaActual?.toDate?.() instanceof Date ? fechaActual.toDate().toISOString().split("T")[0] : "";
+
+  const fechaNuevaStr = prompt(`Fecha actual: ${fechaFormateada || "Sin definir"}\n\nIngrese la nueva fecha (YYYY-MM-DD):`);
+
+  if (!fechaNuevaStr) {
+    toast.warning("No se ingresó ninguna fecha.");
+    return;
+  }
+
+  if (fechaNuevaStr === fechaFormateada) {
+    toast.info("La fecha no cambió.");
+    return;
+  }
+
+  const fechaNueva = new Date(fechaNuevaStr);
+  if (isNaN(fechaNueva.getTime())) {
+    toast.error("La fecha ingresada no es válida.");
+    return;
+  }
+
+  try {
+    const timestamp = Timestamp.fromDate(fechaNueva);
+
+    await modificarCliente(clienteId, { fechaAPagar: timestamp });
+
+    setClientes((prev) =>
+      prev.map((c) =>
+        c.id === clienteId ? { ...c, fechaAPagar: timestamp } : c
+      )
+    );
+
+    toast.success("Fecha actualizada correctamente.");
+  } catch (error) {
+    toast.error("Error al actualizar la fecha: " + error.message);
+  }
+}
+
 export async function actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes }) {
-  if(!telefonoActual){
+  if (!telefonoActual) {
     telefonoActual = "No tiene número agendado."
   }
   const telefonoNuevo = prompt(`Número actual: ${telefonoActual}\n\nIngrese un nuevo número de teléfono: `);
@@ -127,7 +166,7 @@ export async function actualizarTelefonoCliente({ clienteId, telefonoActual, set
   };
 
 
-  if(telefonoNuevo === telefonoActual){
+  if (telefonoNuevo === telefonoActual) {
     toast.info("El número que ingresaste es el mismo que estaba antes.");
     return;
   }

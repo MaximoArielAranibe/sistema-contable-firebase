@@ -1,4 +1,4 @@
-import {useState} from "react";
+import { useState } from "react";
 
 
 export function useFormularioCliente() {
@@ -6,14 +6,16 @@ export function useFormularioCliente() {
   const [telefono, setTelefono] = useState("");
   const [direccion, setDireccion] = useState("");
   const [deuda, setDeuda] = useState("");
+  const [fechaAPagar, setFechaAPagar] = useState("")
   const [comentariosAdicionales, setComentariosAdicionales] = useState("");
 
 
-  const resetFormulario = () =>{
+  const resetFormulario = () => {
     setNombre("");
     setTelefono("");
     setDireccion("");
     setDeuda("");
+    setFechaAPagar("");
     setComentariosAdicionales("")
   }
 
@@ -22,6 +24,7 @@ export function useFormularioCliente() {
     telefono, setTelefono,
     direccion, setDireccion,
     deuda, setDeuda,
+    fechaAPagar, setFechaAPagar,
     comentariosAdicionales, setComentariosAdicionales,
     resetFormulario
   }

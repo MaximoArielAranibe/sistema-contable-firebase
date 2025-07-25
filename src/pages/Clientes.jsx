@@ -16,7 +16,8 @@ import {
   guardarComentarioCliente,
   actualizarNombreCliente,
   actualizarDireccionCliente,
-  actualizarTelefonoCliente
+  actualizarTelefonoCliente,
+  actualizarFechaAPagar
 } from "../helpers/clienteActions";
 
 
@@ -44,6 +45,7 @@ function Clientes() {
     telefono, setTelefono,
     direccion, setDireccion,
     deuda, setDeuda,
+    fechaAPagar, setFechaAPagar,
     comentariosAdicionales, setComentariosAdicionales,
     resetFormulario
   } = useFormularioCliente();
@@ -62,8 +64,8 @@ function Clientes() {
 
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
-    if (![nombre, telefono, direccion, deuda].every((campo) => campo.trim())) {
-      toast.warning("Completa todos los campos");
+    if (![nombre, deuda, fechaAPagar, comentariosAdicionales].every((campo) => campo.trim())) {
+      toast.warning("Completa todos los campos obligatorios marcados con el *");
       return;
     }
 
@@ -74,6 +76,7 @@ function Clientes() {
         telefono,
         direccion,
         deuda: parseFloat(deuda),
+        fechaAPagar,
         comentariosAdicionales,
         createdAt: Date.now(),
         creadoPor: usuarioLogeado,
@@ -128,6 +131,10 @@ function Clientes() {
   const handleActualizarTelefonoCliente = (clienteId, telefonoActual) => {
     actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes });
   }
+
+  const handleActualizarFechaAPagar = (clienteId, fechaActual) => {
+    actualizarFechaAPagar({ clienteId, fechaActual, setFechaAPagar })
+  };
 
   const actualizarDeuda = (id, operacion, name) => {
     actualizarDeudaCliente({
@@ -217,6 +224,7 @@ function Clientes() {
                 handleActualizarNombreCliente={handleActualizarNombreCliente}
                 handleActualizarDireccionCliente={handleActualizarDireccionCliente}
                 handleActualizarTelefonoCliente={handleActualizarTelefonoCliente}
+                handleActualizarFechaAPagar={handleActualizarFechaAPagar}
               />
             ))}
           </ul>
@@ -235,6 +243,8 @@ function Clientes() {
         direccion={direccion}
         setDireccion={setDireccion}
         deuda={deuda}
+        fechaAPagar={fechaAPagar}
+        setFechaAPagar={setFechaAPagar}
         setDeuda={setDeuda}
         comentariosAdicionales={comentariosAdicionales}
         setComentariosAdicionales={setComentariosAdicionales}

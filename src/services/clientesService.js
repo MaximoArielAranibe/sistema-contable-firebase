@@ -1,4 +1,3 @@
-// servicios/clientesService.js
 import {
   collection,
   addDoc,
@@ -8,6 +7,9 @@ import {
   doc,
   updateDoc,
   setDoc,
+  Timestamp,
+  query,
+  orderBy,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { getAuth } from "firebase/auth";
@@ -20,26 +22,51 @@ export const obtenerHistorialCliente = async (clienteId) => {
   const user = auth.currentUser;
   if (!user) throw new Error("Usuario no autenticado");
 
-  const historialRef = collection(db, "usuarios", emailAId(user.email), "clientes", clienteId, "historial");
-  const snapshot = await getDocs(historialRef);
+  const historialRef = collection(
+    db,
+    "usuarios",
+    emailAId(user.email),
+    "clientes",
+    clienteId,
+    "historial"
+  );
+
+  const q = query(historialRef, orderBy("timestamp", "desc"));
+  const snapshot = await getDocs(q);
 
   return snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  })).sort((a, b) => b.timestamp - a.timestamp);
+  }));
 };
 
-export const registrarHistorial = async (clienteId, operacion, monto) => {
+export const registrarHistorial = async (
+  clienteId,
+  operacion,
+  monto,
+  fechaCustom = null
+) => {
   const auth = getAuth();
   const user = auth.currentUser;
   if (!user) throw new Error("Usuario no autenticado");
 
-  const historialRef = collection(db, "usuarios", emailAId(user.email), "clientes", clienteId, "historial");
+  const historialRef = collection(
+    db,
+    "usuarios",
+    emailAId(user.email),
+    "clientes",
+    clienteId,
+    "historial"
+  );
+
+  const fecha = fechaCustom ? new Date(fechaCustom) : new Date();
+
   await addDoc(historialRef, {
     operacion,
     monto,
-    timestamp: Date.now(),
+    timestamp: Timestamp.fromDate(fecha),
     realizadoPor: user.email,
+    fechaFormateada: fecha.toLocaleDateString("es-AR"),
   });
 };
 
@@ -54,8 +81,14 @@ export const agregarCliente = async (cliente) => {
   const usuarioRef = doc(db, "usuarios", userIdTransformado);
   await setDoc(usuarioRef, { email }, { merge: true });
 
+  const clienteConFechaConvertida = {
+    ...cliente,
+    fechaAPagar: cliente.fechaAPagar ?
+      Timestamp.fromDate(new Date(cliente.fechaAPagar)) : null,
+  };
+
   const clientesRef = collection(db, "usuarios", userIdTransformado, "clientes");
-  const docRef = await addDoc(clientesRef, cliente);
+  const docRef = await addDoc(clientesRef, clienteConFechaConvertida);
   return docRef.id;
 };
 
@@ -80,7 +113,13 @@ export const eliminarCliente = async (clienteId) => {
   const email = user.email;
   const userIdTransformado = emailAId(email);
 
-  const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
+  const clienteRef = doc(
+    db,
+    "usuarios",
+    userIdTransformado,
+    "clientes",
+    clienteId
+  );
   await deleteDoc(clienteRef);
 };
 
@@ -92,7 +131,13 @@ export const modificarCliente = async (clienteId, nuevosDatos) => {
   const email = user.email;
   const userIdTransformado = emailAId(email);
 
-  const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
+  const clienteRef = doc(
+    db,
+    "usuarios",
+    userIdTransformado,
+    "clientes",
+    clienteId
+  );
   await updateDoc(clienteRef, nuevosDatos);
 };
 
@@ -104,7 +149,13 @@ export const sumarDeuda = async (clienteId, monto) => {
   const email = user.email;
   const userIdTransformado = emailAId(email);
 
-  const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
+  const clienteRef = doc(
+    db,
+    "usuarios",
+    userIdTransformado,
+    "clientes",
+    clienteId
+  );
   const snapshot = await getDoc(clienteRef);
   const actual = snapshot.data()?.deuda || 0;
   const nuevaDeuda = actual + monto;
@@ -120,14 +171,19 @@ export const restarDeuda = async (clienteId, monto) => {
   const email = user.email;
   const userIdTransformado = emailAId(email);
 
-  const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
+  const clienteRef = doc(
+    db,
+    "usuarios",
+    userIdTransformado,
+    "clientes",
+    clienteId
+  );
   const snapshot = await getDoc(clienteRef);
   const actual = snapshot.data()?.deuda || 0;
   const nuevaDeuda = actual - monto;
   await updateDoc(clienteRef, { deuda: nuevaDeuda });
   return nuevaDeuda;
 };
-
 
 export const calcularDeudaTotal = async () => {
   const auth = getAuth();

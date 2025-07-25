@@ -40,7 +40,10 @@ function HistorialCliente({
         {historial.slice(0, historialVisible || 5).map((h) => (
           <li key={h.id}>
             <strong>{h.operacion === 'sumar' ? '➕' : '➖'}</strong> ${h.monto} el{' '}
-            {new Date(h.timestamp).toLocaleString('es-AR')} por {h.realizadoPor}
+            {h.timestamp && !isNaN(new Date(h.timestamp))
+              ? new Date(h.timestamp).toLocaleString('es-AR')
+              : 'Fecha inválida'}
+
           </li>
         ))}
       </ul>
