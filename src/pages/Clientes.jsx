@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   agregarCliente,
   eliminarCliente,
+  obtenerClientes,
 } from "../services/clientesService";
 import "../styles/index.scss";
 import ModalAgregarCliente from "../components/Clientes/ModalAgregarCliente";
@@ -88,6 +89,8 @@ function Clientes() {
         calcularDeudaTotal(nuevosClientes);
         return nuevosClientes;
       });
+
+      obtenerClientes();
 
       resetFormulario();
       setMostrarModal(false);
