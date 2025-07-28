@@ -19,8 +19,7 @@ import {
   actualizarTelefonoCliente,
   actualizarFechaAPagar
 } from "../helpers/clienteActions";
-
-
+import { Timestamp } from "firebase/firestore";
 
 function Clientes() {
   const {
@@ -50,7 +49,6 @@ function Clientes() {
     resetFormulario
   } = useFormularioCliente();
 
-  // Estados propios del componente
   const [mostrarModal, setMostrarModal] = useState(false);
   const [busqueda, setBusqueda] = useState("");
   const [ordenSeleccionado, setOrdenSeleccionado] = useState("recientes");
@@ -60,11 +58,9 @@ function Clientes() {
 
   const clientesOrdenados = ordenarYFiltrarClientes(clientes, busqueda, ordenSeleccionado);
 
-
-
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
-    if (![nombre, deuda, fechaAPagar,].every((campo) => campo.trim())) {
+    if (![nombre, deuda, fechaAPagar].every((campo) => campo.trim())) {
       toast.warning("Completa todos los campos obligatorios marcados con el *");
       return;
     }
@@ -76,7 +72,7 @@ function Clientes() {
         telefono,
         direccion,
         deuda: parseFloat(deuda),
-        fechaAPagar,
+        fechaAPagar: Timestamp.fromDate(new Date(fechaAPagar)), // ✅ corrección aquí
         comentariosAdicionales,
         createdAt: Date.now(),
         creadoPor: usuarioLogeado,
@@ -126,11 +122,11 @@ function Clientes() {
 
   const handleActualizarDireccionCliente = (clienteId, direccionActual) => {
     actualizarDireccionCliente({ clienteId, direccionActual, setClientes });
-  }
+  };
 
   const handleActualizarTelefonoCliente = (clienteId, telefonoActual) => {
     actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes });
-  }
+  };
 
   const handleActualizarFechaAPagar = (clienteId, nuevaFechaISO) => {
     actualizarFechaAPagar({ clienteId, fechaISO: nuevaFechaISO, setClientes });

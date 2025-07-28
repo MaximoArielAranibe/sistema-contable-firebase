@@ -74,15 +74,14 @@ function ModalAgregarCliente({
             />
           </label>
 
-          <label htmlFor="" className="clientes__modal-label">
+          <label className="clientes__modal-label">
             <h4>Fecha a pagar: <span>*</span></h4>
-            <input type="date"
-              placeholder="DD/MM/AAAA"
+            <input
+              type="date"
               value={fechaAPagar}
               onChange={(e) => setFechaAPagar(e.target.value)}
               required
-              />
-              {console.log(fechaAPagar)}
+            />
           </label>
 
           <label className="clientes__modal-label">

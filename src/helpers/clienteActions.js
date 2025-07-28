@@ -79,7 +79,7 @@ export async function actualizarDeudaCliente({
   id, operacion, name, setClientes, calcularDeudaTotal, setHistoriales, clienteHistorialVisible
 }) {
   const input = prompt(`¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name}?`);
-  const monto = parseFloat(input);
+  const monto = (input);
   if (isNaN(monto) || monto <= 0) {
     toast.warning("Ingresá un número válido mayor que cero");
     return;
