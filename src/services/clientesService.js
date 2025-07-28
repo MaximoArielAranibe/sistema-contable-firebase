@@ -17,6 +17,8 @@ import { getAuth } from "firebase/auth";
 // Convierte un email a un ID seguro para Firestore (evita puntos y @)
 const emailAId = (email) => email.replace(/\./g, "_").replace(/@/g, "-");
 
+
+
 export const obtenerHistorialCliente = async (clienteId) => {
   const auth = getAuth();
   const user = auth.currentUser;
@@ -66,7 +68,7 @@ export const registrarHistorial = async (
     monto,
     timestamp: Timestamp.fromDate(fecha),
     realizadoPor: user.email,
-    fechaFormateada: fecha.toLocaleDateString("es-AR"),
+    fechaISO: fecha.toISOString(),
   });
 };
 
@@ -140,6 +142,7 @@ export const modificarCliente = async (clienteId, nuevosDatos) => {
   );
   await updateDoc(clienteRef, nuevosDatos);
 };
+
 
 export const sumarDeuda = async (clienteId, monto) => {
   const auth = getAuth();

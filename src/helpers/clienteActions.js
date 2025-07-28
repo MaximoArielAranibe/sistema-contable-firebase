@@ -5,8 +5,47 @@ import {
   sumarDeuda,
   restarDeuda,
 } from "../services/clientesService.js";
+import { Timestamp, doc, updateDoc } from "firebase/firestore";
+import { db } from "../firebase"; // Asegurate de tener esto también bien importado
 import { toast } from "react-toastify";
-import { Timestamp } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
+export function formatearFecha(fechaISO) {
+  const [año, mes, dia] = fechaISO.split("-");
+  return `${dia}/${mes}/${año}`;
+}
+
+export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }) => {
+  if (!fechaISO) return;
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    toast.error("Usuario no autenticado");
+    return;
+  }
+
+  const emailAId = (email) => email.replace(/\./g, "_").replace(/@/g, "-");
+  const userIdTransformado = emailAId(user.email);
+
+  const fechaFormateada = formatearFecha(fechaISO);
+
+  const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
+
+  try {
+    await modificarCliente(clienteId, { fechaAPagar: fechaFormateada });
+
+    setClientes((prev) =>
+      prev.map((c) =>
+        c.id === clienteId ? { ...c, fechaAPagar: fechaFormateada } : c
+      )
+    );
+
+    toast.success("Fecha actualizada correctamente");
+  } catch (error) {
+    toast.error("Error al actualizar fecha: " + error.message);
+  }
+};
 
 export async function actualizarNombreCliente({ clienteId, nombreActual, setClientes }) {
   const nuevoNombre = prompt(`Nombre actual: ${nombreActual}\n\nIngresá el nuevo nombre:`)?.trim();
@@ -36,7 +75,6 @@ export async function actualizarNombreCliente({ clienteId, nombreActual, setClie
   }
 }
 
-
 export async function actualizarDeudaCliente({
   id, operacion, name, setClientes, calcularDeudaTotal, setHistoriales, clienteHistorialVisible
 }) {
@@ -49,7 +87,7 @@ export async function actualizarDeudaCliente({
 
   try {
     const nuevaDeuda = operacion === "sumar"
-      ? await sumarDeuda(id, monto)
+      ? await (id, monto)
       : await restarDeuda(id, monto);
 
     await registrarHistorial(id, operacion, monto);
@@ -91,17 +129,15 @@ export async function guardarComentarioCliente({
   }
 }
 
-
 export async function actualizarDireccionCliente({ clienteId, direccionActual, setClientes }) {
-
   const nuevaDireccion = prompt(`Dirección actual: ${direccionActual}\n\nIngresá la nueva dirección:`)
   if (!nuevaDireccion) {
-    toast.warning("No se ingreso una dirección");
+    toast.warning("No se ingresó una dirección");
     return;
   }
 
   if (nuevaDireccion === direccionActual) {
-    toast.info("La dirección no cambio porque estas ingresando la misma.")
+    toast.info("La dirección no cambió porque estás ingresando la misma.");
     return;
   }
 
@@ -116,67 +152,27 @@ export async function actualizarDireccionCliente({ clienteId, direccionActual, s
   };
 }
 
-export async function actualizarFechaAPagar({ clienteId, fechaActual, setFechaAPagar }) {
-  const fechaFormateada = fechaActual?.toDate?.() instanceof Date ? fechaActual.toDate().toISOString().split("T")[0] : "";
-
-  const fechaNuevaStr = prompt(`Fecha actual: ${fechaFormateada || "Sin definir"}\n\nIngrese la nueva fecha (YYYY-MM-DD):`);
-
-  if (!fechaNuevaStr) {
-    toast.warning("No se ingresó ninguna fecha.");
-    return;
-  }
-
-  if (fechaNuevaStr === fechaFormateada) {
-    toast.info("La fecha no cambió.");
-    return;
-  }
-
-  const fechaNueva = new Date(fechaNuevaStr);
-  if (isNaN(fechaNueva.getTime())) {
-    toast.error("La fecha ingresada no es válida.");
-    return;
-  }
-
-  try {
-    const timestamp = Timestamp.fromDate(fechaNueva);
-
-    await modificarCliente(clienteId, { fechaAPagar: timestamp });
-
-    setClientes((prev) =>
-      prev.map((c) =>
-        c.id === clienteId ? { ...c, fechaAPagar: timestamp } : c
-      )
-    );
-
-    toast.success("Fecha actualizada correctamente.");
-  } catch (error) {
-    toast.error("Error al actualizar la fecha: " + error.message);
-  }
-}
-
 export async function actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes }) {
   if (!telefonoActual) {
-    telefonoActual = "No tiene número agendado."
+    telefonoActual = "No tiene número agendado.";
   }
-  const telefonoNuevo = prompt(`Número actual: ${telefonoActual}\n\nIngrese un nuevo número de teléfono: `);
+  const telefonoNuevo = prompt(`Número actual: ${telefonoActual}\n\nIngrese un nuevo número de teléfono:`);
 
   if (!telefonoNuevo) {
-    toast.warning("No se ingresó ningun télefono");
+    toast.warning("No se ingresó ningún teléfono");
     return;
   };
-
 
   if (telefonoNuevo === telefonoActual) {
     toast.info("El número que ingresaste es el mismo que estaba antes.");
     return;
   }
 
-
   try {
     await modificarCliente(clienteId, { telefono: telefonoNuevo });
     setClientes((prev) => prev.map((c) => c.id === clienteId ? { ...c, telefono: telefonoNuevo } : c))
-    toast.success("Teléfono actualizado con éxito.")
+    toast.success("Teléfono actualizado con éxito.");
   } catch (error) {
-    toast.error("Ha ocurrido un error", error.message)
+    toast.error("Ha ocurrido un error: " + error.message);
   };
 };

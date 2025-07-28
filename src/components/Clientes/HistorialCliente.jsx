@@ -39,11 +39,11 @@ function HistorialCliente({
         <strong>Historial</strong>
         {historial.slice(0, historialVisible || 5).map((h) => (
           <li key={h.id}>
-            <strong>{h.operacion === 'sumar' ? '➕' : '➖'}</strong> ${h.monto} el{' '}
-            {h.timestamp && !isNaN(new Date(h.timestamp))
-              ? new Date(h.timestamp).toLocaleString('es-AR')
-              : 'Fecha inválida'}
-
+            <strong>{h.operacion === 'sumar' ? '➕' : '➖'}</strong> ${h.monto} el{" "}
+            {h.timestamp?.toDate
+              ? h.timestamp.toDate().toLocaleString("es-AR")
+              : "Fecha inválida"}{" "}
+            por {h.realizadoPor}
           </li>
         ))}
       </ul>

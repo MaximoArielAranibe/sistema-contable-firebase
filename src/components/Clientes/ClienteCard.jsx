@@ -90,21 +90,23 @@ function ClienteCard({
                 ✏️
               </button>
 
-              <h4>
-                Fecha a pagar:{" "}
-                {cliente.fechaAPagar?.toDate
-                  ? cliente.fechaAPagar.toDate().toLocaleDateString("es-AR")
-                  : "Sin fecha"}
-                <button
-                  onClick={() => {
-                    handleActualizarFechaAPagar(cliente.id, cliente.fechaAPagar)
-                  }}
-                  className="button-lapiz"
-                  aria-label="Editar fecha a pagar"
-                >
-                  ✏️
-                </button>
-              </h4>
+              <div className="form-group">
+                <label htmlFor={`fecha-${cliente.id}`} className="form-label">
+                  Fecha a pagar:
+                </label>
+                <input
+                  type="date"
+                  id={`fecha-${cliente.id}`}
+                  className="form-control"
+                  value={
+                    typeof cliente.fechaAPagar === "string" && cliente.fechaAPagar.includes("/")
+                      ? cliente.fechaAPagar.split("/").reverse().join("-")
+                      : ""
+                  }
+                  onChange={(e) => handleActualizarFechaAPagar(cliente.id, e.target.value)}
+                />
+              </div>
+
 
             </>
           )}

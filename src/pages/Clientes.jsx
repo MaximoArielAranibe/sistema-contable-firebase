@@ -64,7 +64,7 @@ function Clientes() {
 
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
-    if (![nombre, deuda, fechaAPagar, comentariosAdicionales].every((campo) => campo.trim())) {
+    if (![nombre, deuda, fechaAPagar,].every((campo) => campo.trim())) {
       toast.warning("Completa todos los campos obligatorios marcados con el *");
       return;
     }
@@ -132,8 +132,8 @@ function Clientes() {
     actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes });
   }
 
-  const handleActualizarFechaAPagar = (clienteId, fechaActual) => {
-    actualizarFechaAPagar({ clienteId, fechaActual, setFechaAPagar })
+  const handleActualizarFechaAPagar = (clienteId, nuevaFechaISO) => {
+    actualizarFechaAPagar({ clienteId, fechaISO: nuevaFechaISO, setClientes });
   };
 
   const actualizarDeuda = (id, operacion, name) => {

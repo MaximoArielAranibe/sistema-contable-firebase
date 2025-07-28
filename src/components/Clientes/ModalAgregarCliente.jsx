@@ -82,6 +82,7 @@ function ModalAgregarCliente({
               onChange={(e) => setFechaAPagar(e.target.value)}
               required
               />
+              {console.log(fechaAPagar)}
           </label>
 
           <label className="clientes__modal-label">
