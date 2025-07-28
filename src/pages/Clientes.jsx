@@ -17,7 +17,7 @@ import {
   actualizarNombreCliente,
   actualizarDireccionCliente,
   actualizarTelefonoCliente,
-  actualizarFechaAPagar
+  actualizarFechaAPagar,
 } from "../helpers/clienteActions";
 import { Timestamp } from "firebase/firestore";
 
@@ -46,7 +46,7 @@ function Clientes() {
     deuda, setDeuda,
     fechaAPagar, setFechaAPagar,
     comentariosAdicionales, setComentariosAdicionales,
-    resetFormulario
+    resetFormulario,
   } = useFormularioCliente();
 
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -60,6 +60,7 @@ function Clientes() {
 
   const handleAgregarCliente = async (e) => {
     e.preventDefault();
+
     if (![nombre, deuda, fechaAPagar].every((campo) => campo.trim())) {
       toast.warning("Completa todos los campos obligatorios marcados con el *");
       return;
@@ -72,7 +73,7 @@ function Clientes() {
         telefono,
         direccion,
         deuda: parseFloat(deuda),
-        fechaAPagar: Timestamp.fromDate(new Date(fechaAPagar)), // ✅ corrección aquí
+        fechaAPagar: Timestamp.fromDate(new Date(fechaAPagar)),
         comentariosAdicionales,
         createdAt: Date.now(),
         creadoPor: usuarioLogeado,
@@ -140,7 +141,7 @@ function Clientes() {
       setClientes,
       calcularDeudaTotal,
       setHistoriales,
-      clienteHistorialVisible
+      clienteHistorialVisible,
     });
   };
 
@@ -150,7 +151,7 @@ function Clientes() {
       nuevoComentario,
       setClientes,
       setEditandoComentario,
-      setNuevoComentario
+      setNuevoComentario,
     });
   };
 

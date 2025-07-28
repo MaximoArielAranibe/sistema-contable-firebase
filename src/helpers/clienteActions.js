@@ -6,7 +6,7 @@ import {
   restarDeuda,
 } from "../services/clientesService.js";
 import { Timestamp, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase"; // Asegurate de tener esto también bien importado
+import { db } from "../firebase";
 import { toast } from "react-toastify";
 import { getAuth } from "firebase/auth";
 
@@ -30,10 +30,16 @@ export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }
 
   const fechaFormateada = formatearFecha(fechaISO);
 
-  const clienteRef = doc(db, "usuarios", userIdTransformado, "clientes", clienteId);
-
   try {
     await modificarCliente(clienteId, { fechaAPagar: fechaFormateada });
+
+    // Registro en historial la actualización de fecha
+    await registrarHistorial(
+      clienteId,
+      "actualizar_fecha",
+      fechaFormateada,
+      "Fecha a pagar actualizada"
+    );
 
     setClientes((prev) =>
       prev.map((c) =>
@@ -79,7 +85,8 @@ export async function actualizarDeudaCliente({
   id, operacion, name, setClientes, calcularDeudaTotal, setHistoriales, clienteHistorialVisible
 }) {
   const input = prompt(`¿Cuánto querés ${operacion === "sumar" ? "sumar" : "restar"} a la deuda de ${name}?`);
-  const monto = (input);
+  const monto = Number(input);
+
   if (isNaN(monto) || monto <= 0) {
     toast.warning("Ingresá un número válido mayor que cero");
     return;
@@ -87,9 +94,10 @@ export async function actualizarDeudaCliente({
 
   try {
     const nuevaDeuda = operacion === "sumar"
-      ? await (id, monto)
+      ? await sumarDeuda(id, monto)
       : await restarDeuda(id, monto);
 
+    // Registro en historial la operación de deuda
     await registrarHistorial(id, operacion, monto);
 
     if (clienteHistorialVisible === id) {
