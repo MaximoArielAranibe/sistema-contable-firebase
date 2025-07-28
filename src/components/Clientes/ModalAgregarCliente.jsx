@@ -1,5 +1,5 @@
 import React from "react";
-import '../../styles/modalAgregarCliente.scss'
+import '../../styles/modalAgregarCliente.scss';
 
 function ModalAgregarCliente({
   mostrarModal,
@@ -24,14 +24,10 @@ function ModalAgregarCliente({
   return (
     <div className="clientes__modal-overlay">
       <div className="clientes__modal">
-        <button
-          onClick={onClose}
-          className="clientes__modal-cerrar"
-        >
-          ✖
-        </button>
+        <button onClick={onClose} className="clientes__modal-cerrar">✖</button>
         <h2 className="clientes__modal-title">Agregar Cliente</h2>
         <form onSubmit={onSubmit} className="clientes__modal-form">
+
           <label className="clientes__modal-label">
             <h4>Nombre <span>*</span></h4>
             <input

@@ -23,6 +23,24 @@ function ClienteCard({
   handleActualizarTelefonoCliente,
   handleActualizarFechaAPagar
 }) {
+  function obtenerFechaInput(fechaAPagar) {
+    if (!fechaAPagar) return "";
+
+    if (fechaAPagar.toDate && typeof fechaAPagar.toDate === "function") {
+      const date = fechaAPagar.toDate();
+      if (!isNaN(date.getTime())) {
+        return date.toISOString().split("T")[0];
+      }
+    }
+
+    const date = new Date(fechaAPagar);
+    if (!isNaN(date.getTime())) {
+      return date.toISOString().split("T")[0];
+    }
+
+    return "";
+  }
+
   return (
     <li key={cliente.id} className="cliente">
       <div className="cliente__info">
@@ -46,11 +64,10 @@ function ClienteCard({
             ✏️
           </button>
         </h4>
+
         <h4>Dirección: {cliente.direccion}
           <button
-            onClick={() => {
-              handleActualizarDireccionCliente(cliente.id, cliente.direccion)
-            }}
+            onClick={() => handleActualizarDireccionCliente(cliente.id, cliente.direccion)}
             className="button-lapiz"
             aria-label="Editar dirección"
           >
@@ -64,7 +81,8 @@ function ClienteCard({
             ? `$${Math.abs(cliente.deuda).toLocaleString("es-AR")} a favor`
             : `$${cliente.deuda.toLocaleString("es-AR")}`}
         </h4>
-        <h4 className="">
+
+        <h4>
           Comentarios:{" "}
           {editandoComentario === cliente.id ? (
             <>
@@ -98,16 +116,10 @@ function ClienteCard({
                   type="date"
                   id={`fecha-${cliente.id}`}
                   className="form-control"
-                  value={
-                    typeof cliente.fechaAPagar === "string" && cliente.fechaAPagar.includes("/")
-                      ? cliente.fechaAPagar.split("/").reverse().join("-")
-                      : ""
-                  }
+                  value={obtenerFechaInput(cliente.fechaAPagar)}
                   onChange={(e) => handleActualizarFechaAPagar(cliente.id, e.target.value)}
                 />
               </div>
-
-
             </>
           )}
         </h4>
@@ -115,12 +127,8 @@ function ClienteCard({
 
       <div className="cliente__funciones">
         <button onClick={() => handleBorrarCliente(cliente.id)}>🗑️</button>
-        <button onClick={() => actualizarDeuda(cliente.id, "restar", cliente.nombre)}>
-          ➖
-        </button>
-        <button onClick={() => actualizarDeuda(cliente.id, "sumar", cliente.nombre)}>
-          ➕
-        </button>
+        <button onClick={() => actualizarDeuda(cliente.id, "restar", cliente.nombre)}>➖</button>
+        <button onClick={() => actualizarDeuda(cliente.id, "sumar", cliente.nombre)}>➕</button>
         <button onClick={() => toggleHistorial(cliente.id)}>
           {clienteHistorialVisible === cliente.id ? "Ocultar Historial" : "Ver Historial"}
         </button>

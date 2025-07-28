@@ -5,10 +5,10 @@ import {
   sumarDeuda,
   restarDeuda,
 } from "../services/clientesService.js";
-import { Timestamp, doc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
 import { toast } from "react-toastify";
 import { getAuth } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
+
 
 export function formatearFecha(fechaISO) {
   const [año, mes, dia] = fechaISO.split("-");
@@ -25,25 +25,25 @@ export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }
     return;
   }
 
-  const emailAId = (email) => email.replace(/\./g, "_").replace(/@/g, "-");
-  const userIdTransformado = emailAId(user.email);
-
-  const fechaFormateada = formatearFecha(fechaISO);
-
   try {
-    await modificarCliente(clienteId, { fechaAPagar: fechaFormateada });
+    // Convertimos el string "YYYY-MM-DD" del input en Timestamp
+    const fechaComoTimestamp = Timestamp.fromDate(new Date(fechaISO));
 
-    // Registro en historial la actualización de fecha
+    await modificarCliente(clienteId, {
+      fechaAPagar: fechaComoTimestamp,
+    });
+
+    // También registramos en el historial como string (para mostrar)
     await registrarHistorial(
       clienteId,
       "actualizar_fecha",
-      fechaFormateada,
+      fechaISO,
       "Fecha a pagar actualizada"
     );
 
     setClientes((prev) =>
       prev.map((c) =>
-        c.id === clienteId ? { ...c, fechaAPagar: fechaFormateada } : c
+        c.id === clienteId ? { ...c, fechaAPagar: fechaComoTimestamp } : c
       )
     );
 
