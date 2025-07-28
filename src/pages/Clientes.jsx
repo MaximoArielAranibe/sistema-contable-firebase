@@ -97,10 +97,11 @@ function Clientes() {
       setIsLoading(false);
     }
   };
-
   const handleBorrarCliente = async (id) => {
-    const confirmacion = prompt("Si estás seguro de eliminar este cliente, escribí: eliminar");
-    if (confirmacion?.toLowerCase() !== "eliminar") {
+    const confirmacion = prompt("¿Estás seguro de eliminar este cliente? Presioná Aceptar para confirmar.");
+
+    if (confirmacion === null) {
+      // Usuario apretó Cancelar
       toast.warning("Cancelado. No se eliminó el cliente.");
       return;
     }
@@ -112,6 +113,7 @@ function Clientes() {
         calcularDeudaTotal(actualizados);
         return actualizados;
       });
+      toast.success("Cliente eliminado correctamente");
     } catch (error) {
       alert("Error al eliminar al cliente: " + error.message);
     }

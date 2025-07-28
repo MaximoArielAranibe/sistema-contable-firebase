@@ -43,7 +43,11 @@ function HistorialCliente({
             {h.timestamp?.toDate
               ? h.timestamp.toDate().toLocaleString("es-AR")
               : "Fecha inválida"}{" "}
-            por {h.realizadoPor}
+            {h.comentario && (
+              <p className="historial__comentario" style={{ margin: "0.8rem 0 0 0em", fontStyle: "italic", fontSize: "0.9em", color: "#555" }}>
+                💬 {h.comentario}
+              </p>
+            )}
           </li>
         ))}
       </ul>

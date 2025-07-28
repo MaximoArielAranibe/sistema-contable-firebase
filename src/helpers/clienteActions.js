@@ -92,13 +92,15 @@ export async function actualizarDeudaCliente({
     return;
   }
 
+  const comentario = prompt("Podés dejar un comentario sobre esta operación (opcional):") || "";
+
   try {
     const nuevaDeuda = operacion === "sumar"
       ? await sumarDeuda(id, monto)
       : await restarDeuda(id, monto);
 
     // Registro en historial la operación de deuda
-    await registrarHistorial(id, operacion, monto);
+    await registrarHistorial(id, operacion, monto, comentario);
 
     if (clienteHistorialVisible === id) {
       const historialActualizado = await obtenerHistorialCliente(id);
