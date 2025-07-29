@@ -38,17 +38,26 @@ function HistorialCliente({
       <ul>
         <strong>Historial</strong>
         {historial.slice(0, historialVisible || 5).map((h) => (
-          <li key={h.id}>
-            <strong>{h.operacion === 'sumar' ? '➕' : '➖'}</strong> ${h.monto} el{" "}
-            {h.timestamp?.toDate
-              ? h.timestamp.toDate().toLocaleString("es-AR")
-              : "Fecha inválida"}{" "}
+          <li key={h.id} className="historial__item">
+            <div className="historial__header">
+              <span className="historial__tipo">
+                {h.operacion === 'sumar' ? '➕' : h.operacion === 'restar' ? '➖' : '🔄'}
+              </span>
+              <span className="historial__monto">
+                {typeof h.monto === 'number' ? `$${h.monto.toLocaleString("es-AR")}` : h.monto}
+              </span>
+              <span className="historial__fecha">
+                {h.timestamp?.toDate ? h.timestamp.toDate().toLocaleString("es-AR") : "Fecha inválida"}
+              </span>
+            </div>
+
             {h.comentario && (
-              <p className="historial__comentario" style={{ margin: "0.8rem 0 0 0em", fontStyle: "italic", fontSize: "0.9em", color: "#555" }}>
+              <div className="historial__comentario">
                 💬 {h.comentario}
-              </p>
+              </div>
             )}
           </li>
+
         ))}
       </ul>
 
