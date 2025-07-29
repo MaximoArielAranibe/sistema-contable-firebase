@@ -14,7 +14,7 @@ export function useFormularioCliente() {
     setNombre("");
     setTelefono("");
     setDireccion("");
-    setDeuda("");
+    setDeuda(0);
     setFechaAPagar("");
     setComentariosAdicionales("")
   }

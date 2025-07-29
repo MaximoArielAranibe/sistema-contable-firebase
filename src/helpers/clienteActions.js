@@ -5,19 +5,14 @@ import {
   sumarDeuda,
   restarDeuda,
 } from "../services/clientesService.js";
-import { Timestamp } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { getAuth } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
+
 
 export function formatearFecha(fechaISO) {
   const [año, mes, dia] = fechaISO.split("-");
   return `${dia}/${mes}/${año}`;
-}
-
-// 🔧 NUEVA función para convertir "dd/mm/yyyy" a ISO (necesaria para Timestamp)
-function convertirFechaFormateadaAISO(fechaFormateada) {
-  const [dia, mes, año] = fechaFormateada.split("/");
-  return `${año}-${mes.padStart(2, "0")}-${dia.padStart(2, "0")}T00:00:00`;
 }
 
 export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }) => {
@@ -30,34 +25,27 @@ export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }
     return;
   }
 
-  const fechaFormateada = formatearFecha(fechaISO);
-
-  // 🕒 Creamos Timestamp desde fecha ISO
-  const fechaDate = new Date(fechaISO); // fechaISO ya está en yyyy-mm-dd
-  const fechaTimestamp = Timestamp.fromDate(fechaDate);
-
   try {
-    // 🔄 Guardamos ambos campos
+    // Convertimos el string "YYYY-MM-DD" del input en Timestamp
+    const fechaComoTimestamp = Timestamp.fromDate(new Date(fechaISO));
+
     await modificarCliente(clienteId, {
-      fechaAPagar: fechaFormateada,
-      fechaAPagarTimestamp: fechaTimestamp,
+      fechaAPagar: fechaComoTimestamp,
     });
 
+    // También registramos en el historial como string (para mostrar)
     await registrarHistorial(
       clienteId,
       "actualizar_fecha",
-      fechaFormateada,
-      `Fecha a pagar cambiada a ${fechaFormateada}`
+      fechaISO,
+      "Fecha a pagar actualizada"
     );
 
     setClientes((prev) =>
       prev.map((c) =>
-        c.id === clienteId
-          ? { ...c, fechaAPagar: fechaFormateada }
-          : c
+        c.id === clienteId ? { ...c, fechaAPagar: fechaComoTimestamp } : c
       )
     );
-
 
     toast.success("Fecha actualizada correctamente");
   } catch (error) {
@@ -104,19 +92,15 @@ export async function actualizarDeudaCliente({
     return;
   }
 
-  const comentarioUsuario = prompt("Podés dejar un comentario sobre esta operación (opcional):") || "";
-  const comentarioFinal = comentarioUsuario?.trim()
-    ? comentarioUsuario
-    : operacion === "sumar"
-      ? `Se sumaron $${monto}`
-      : `Se restaron $${monto}`;
+  const comentario = prompt("Podés dejar un comentario sobre esta operación (opcional):") || "";
 
   try {
     const nuevaDeuda = operacion === "sumar"
       ? await sumarDeuda(id, monto)
       : await restarDeuda(id, monto);
 
-    await registrarHistorial(id, operacion, monto, comentarioFinal);
+    // Registro en historial la operación de deuda
+    await registrarHistorial(id, operacion, monto, comentario);
 
     if (clienteHistorialVisible === id) {
       const historialActualizado = await obtenerHistorialCliente(id);
