@@ -133,9 +133,14 @@ function Clientes() {
   const handleActualizarTelefonoCliente = (clienteId, telefonoActual) => {
     actualizarTelefonoCliente({ clienteId, telefonoActual, setClientes });
   };
-
   const handleActualizarFechaAPagar = (clienteId, nuevaFechaISO) => {
-    actualizarFechaAPagar({ clienteId, fechaISO: nuevaFechaISO, setClientes });
+    actualizarFechaAPagar({
+      clienteId,
+      fechaISO: nuevaFechaISO,
+      setClientes,
+      clienteHistorialVisible,
+      setHistoriales,
+    });
   };
 
   const actualizarDeuda = (id, operacion, name) => {

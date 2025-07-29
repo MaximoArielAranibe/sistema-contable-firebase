@@ -15,7 +15,7 @@ export function formatearFecha(fechaISO) {
   return `${dia}/${mes}/${año}`;
 }
 
-export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }) => {
+/* export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }) => {
   if (!fechaISO) return;
 
   const auth = getAuth();
@@ -52,6 +52,110 @@ export const actualizarFechaAPagar = async ({ clienteId, fechaISO, setClientes }
     toast.error("Error al actualizar fecha: " + error.message);
   }
 };
+ */
+
+/* export const actualizarFechaAPagar = async ({
+  clienteId,
+  fechaISO,
+  setClientes,
+  clienteHistorialVisible,
+  setHistoriales,
+}) => {
+  if (!fechaISO) return;
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    toast.error("Usuario no autenticado");
+    return;
+  }
+
+  try {
+    const fechaComoTimestamp = Timestamp.fromDate(new Date(fechaISO));
+
+    await modificarCliente(clienteId, {
+      fechaAPagar: fechaComoTimestamp,
+    });
+
+    await registrarHistorial(
+      clienteId,
+      "actualizar_fecha",
+      fechaISO,
+      "Fecha a pagar actualizada"
+    );
+
+    // 🔁 Refrescamos historial si está visible
+    if (clienteHistorialVisible === clienteId && typeof obtenerHistorialCliente === 'function') {
+      const historialActualizado = await obtenerHistorialCliente(clienteId);
+      setHistoriales((prev) => ({ ...prev, [clienteId]: historialActualizado }));
+    }
+
+    setClientes((prev) =>
+      prev.map((c) =>
+        c.id === clienteId ? { ...c, fechaAPagar: fechaComoTimestamp } : c
+      )
+    );
+
+    toast.success("Fecha actualizada correctamente");
+  } catch (error) {
+    toast.error("Error al actualizar fecha: " + error.message);
+  }
+}; */
+
+export const actualizarFechaAPagar = async ({
+  clienteId,
+  fechaISO,
+  setClientes,
+  clienteHistorialVisible,
+  setHistoriales,
+}) => {
+  if (!fechaISO) return;
+
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) {
+    toast.error("Usuario no autenticado");
+    return;
+  }
+
+  try {
+    const fechaComoTimestamp = Timestamp.fromDate(new Date(fechaISO));
+
+    await modificarCliente(clienteId, {
+      fechaAPagar: fechaComoTimestamp,
+    });
+
+    await registrarHistorial(
+      clienteId,
+      "actualizar_fecha",
+      fechaISO,
+      "Fecha a pagar actualizada"
+    );
+
+    // 🔁 Refrescamos historial si está visible
+    if (
+      String(clienteHistorialVisible) === String(clienteId) &&
+      typeof obtenerHistorialCliente === "function"
+    ) {
+      const historialActualizado = await obtenerHistorialCliente(clienteId);
+      setHistoriales((prev) => ({
+        ...prev,
+        [clienteId]: historialActualizado,
+      }));
+    }
+
+    setClientes((prev) =>
+      prev.map((c) =>
+        c.id === clienteId ? { ...c, fechaAPagar: fechaComoTimestamp } : c
+      )
+    );
+
+    toast.success("Fecha actualizada correctamente");
+  } catch (error) {
+    toast.error("Error al actualizar fecha: " + error.message);
+  }
+};
+
 
 export async function actualizarNombreCliente({ clienteId, nombreActual, setClientes }) {
   const nuevoNombre = prompt(`Nombre actual: ${nombreActual}\n\nIngresá el nuevo nombre:`)?.trim();
