@@ -116,7 +116,7 @@ function ClienteCard({
                   type="date"
                   id={`fecha-${cliente.id}`}
                   className="form-control"
-                  value={obtenerFechaInput(cliente.fechaAPagar)}
+                  value={obtenerFechaInput(cliente.fechaAPagarTimestamp)}
                   onChange={(e) => handleActualizarFechaAPagar(cliente.id, e.target.value)}
                 />
               </div>

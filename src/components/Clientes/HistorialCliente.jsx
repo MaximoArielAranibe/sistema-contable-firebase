@@ -1,4 +1,3 @@
-
 import '../../styles/historialCliente.scss';
 import React from 'react';
 import Spinner from '../Spinner';
@@ -39,12 +38,39 @@ function HistorialCliente({
         <strong>Historial</strong>
         {historial.slice(0, historialVisible || 5).map((h) => (
           <li key={h.id}>
-            <strong>{h.operacion === 'sumar' ? '➕' : '➖'}</strong> ${h.monto} el{" "}
-            {h.timestamp?.toDate
-              ? h.timestamp.toDate().toLocaleString("es-AR")
-              : "Fecha inválida"}{" "}
-            {h.comentario && (
-              <p className="historial__comentario" style={{ margin: "0.8rem 0 0 0em", fontStyle: "italic", fontSize: "0.9em", color: "#555" }}>
+            <strong>
+              {h.operacion === 'sumar'
+                ? '➕'
+                : h.operacion === 'restar'
+                ? '➖'
+                : '🟪'}
+            </strong>{' '}
+            {h.operacion === 'actualizar_fecha' ? (
+              <>
+                {h.monto} el{' '}
+                {h.timestamp?.toDate
+                  ? h.timestamp.toDate().toLocaleString('es-AR')
+                  : 'Fecha inválida'}
+              </>
+            ) : (
+              <>
+                ${h.monto} el{' '}
+                {h.timestamp?.toDate
+                  ? h.timestamp.toDate().toLocaleString('es-AR')
+                  : 'Fecha inválida'}
+              </>
+            )}
+
+            {h.comentario && h.comentario.trim() !== '' && (
+              <p
+                className="historial__comentario"
+                style={{
+                  margin: '0.8rem 0 0 0em',
+                  fontStyle: 'italic',
+                  fontSize: '0.9em',
+                  color: '#555',
+                }}
+              >
                 💬 {h.comentario}
               </p>
             )}

@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { getAuth } from "firebase/auth";
+import { Timestamp } from "firebase/firestore";
 
 // 🔐 Convierte email a ID válido para Firestore
 const emailAId = (email) => email.replace(/\./g, "_").replace(/@/g, "-");
@@ -105,9 +106,18 @@ export const obtenerClientes = async () => {
 
   return snapshot.docs.map((doc) => {
     const data = doc.data();
+
+    // Reconstruir Timestamp si está presente
+    let fechaTimestamp = data.fechaAPagarTimestamp;
+    if (fechaTimestamp && !(fechaTimestamp instanceof Timestamp)) {
+      // Si está como objeto plano {seconds, nanoseconds}, reconstruir Timestamp
+      fechaTimestamp = new Timestamp(fechaTimestamp.seconds, fechaTimestamp.nanoseconds);
+    }
+
     return {
       id: doc.id,
       ...data,
+      fechaAPagarTimestamp: fechaTimestamp,
     };
   });
 };
@@ -173,7 +183,6 @@ export const restarDeuda = async (clienteId, monto) => {
   return nuevaDeuda;
 };
 
-// 📊 Calcular deuda total
 export const calcularDeudaTotal = async () => {
   const auth = getAuth();
   const user = auth.currentUser;
